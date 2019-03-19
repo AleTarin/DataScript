@@ -4,7 +4,8 @@
   "description": "datascript compiler",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "test": "node compiler tests/test.ds",
+    "make": "jison compiler/compiler.jison compiler/compiler.jisonlex"
   },
   "repository": {
     "type": "git",

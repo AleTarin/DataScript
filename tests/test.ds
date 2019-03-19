@@ -1,0 +1,8 @@
+program myProgram:
+  var a, b: int[10]; var c: string;
+  {
+    a = 10;
+    b = 20;
+    a = a + b;
+  }
+end
