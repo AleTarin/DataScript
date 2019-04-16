@@ -1,10 +1,17 @@
+%{
+    var parser = yy.parser;
+%}
+
 digit                         [0-9]
-integer                       ("-"?(?:[0-9]|[1-9][0-9]+))
-string                        ".*" 
+float                         [0-9]+"."[0-9]+
 id                            [a-zA-Z][a-zA-Z0-9]*
+
 %%
 "program"                   return 'PROGRAM';
 "end"                       return 'END';
+
+"//".*\n                   /* ignore comment */;
+[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]   /* IGNORE */
 
 "function"                  return 'FUNCTION';
 "main"                      return 'MAIN';
@@ -41,10 +48,16 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "=="                        return 'EQUAL';
 "!=="                       return 'DEEP_DIFF'
 "!="                        return 'DIFF'
-">"                         return 'GREATER';
 ">="                        return 'GREATER_EQUAL';
-"<"                         return 'LESSER';
 "<="                        return 'LESSER_EQUAL';
+">"                         return 'GREATER';
+"<"                         return 'LESSER';
+
+{id}                        return 'ID';
+{float}                     return 'CTEF';
+{digit}+                    return 'CTEI';
+\".*\"                      return 'CTES';
+"true"|"false"              return 'CTEB';
 
 "="                         return 'ASSIGN';
 "+"                         return 'PLUS';
@@ -64,23 +77,14 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "("                         return 'LPAREN';
 ")"                         return 'RPAREN';
 
-"/*"                        return 'LCOMMENT';
-"*/"                        return 'RCOMMENT';
-
 "."                         return 'DOT';
 ";"                         return 'SEMICOLON';
 ":"                         return 'COLON';
 ","                         return 'COMMA';
 
-{id}                        return 'ID';
-{string}                    return 'CTES';
-{integer}+                  return 'CTEI';
-{integer}\.{digit}+         return 'CTEF';
-true|false                  return 'CTEB';
+\s+                         /* skip whitespace */;
+\n+                         /* skip EOL */;
+\t+                         /* skip tab */;
+.                           throw 'Illegal character';
 
-\/\/[^\n]*                  /* ignore comment */
-\s+                         /* skip whitespace */
-\n+                         /* skip EOL */
-\t+                         /* skip tab */
-"."                         throw 'Illegal character';
 <<EOF>>                     return 'EOF';

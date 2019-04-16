@@ -1,43 +1,56 @@
-%{
-  var symbolTable = require('./symbolTable.js');
-%}
-
 %right ASSIGN
-%left OR
-%nonassoc EQUAL GREATER
+%left OR AND
+%nonassoc  GREATER GREATER_EQUAL LESSER LESSER_EQUAL DIFF DEEP_DIFF EQUAL DEEP_EQUAL
 %left PLUS MINUS
-%left TIMES
+%left TIMES DIVIDE REST
 %right NOT
 %left DOT
 
 %%
 
-program:
-  PROGRAM ID COLON var modules MAIN COLON block-vars END EOF ;
+program: PROGRAM _p1 _p2 COLON var modules MAIN block-vars END _p3 EOF;
+
+_p1: { yy.parser.createDir() };
+_p2: ID { yy.parser.setName($ID) };
+_p3: { yy.parser.deleteDir() };
 
 var 
-  : VAR ID var-recursive COLON type SEMICOLON var
-  | VAR ID var-recursive COLON type LBRACKET CTEI RBRACKET SEMICOLON var
-  | VAR ID ASSIGN new-structure
+  : VAR _v1 var-recursive var-follow
   | %empty
   ;
 
 var-recursive 
-  : COMMA ID var-recursive 
+  : _v3 
+  | _v3 COMMA var-recursive
+  | %empty
+  ;
+
+var-follow
+  : COLON _v2 var-index SEMICOLON var
+  | COLON new-structure SEMICOLON var
+  ;
+
+_v1: { yy.parser.setTable() };
+_v2: type { yy.parser.setType($type) };
+_v3: ID { yy.parser.setVars($ID); };
+
+var-index
+  : LBRACKET CTEI RBRACKET var-index
   | %empty
   ;
 
 new-structure
-  : NEW structures LPAREN RPAREN SEMICOLON
+  : structures { yy.parser.setType($structures) }
   ;
 
 structures
-  : vector
-  | dataset
+  : VECTOR
+  | DATASET
   ;
   
 modules
   : FUNCTION ID LPAREN params RPAREN COLON module-type block-vars modules
+  | %empty
   ;
 
 module-type
@@ -46,8 +59,8 @@ module-type
   ;
 
 params
-  : ID COLON type
-  | ID COLON type COMMA params
+  : ID COLON type var-index
+  | ID COLON type var-index COMMA params
   | %empty
   ;
 
@@ -63,7 +76,7 @@ block
   ;
 
 block-vars
-  : LBRACE var block-inside RBRACE
+  : LBRACE var block-inside RBRACE 
   ;
   
 block-inside
@@ -73,8 +86,19 @@ block-inside
   ;
 
 return-statement
-  : RETURN statement 
+  : RETURN statement SEMICOLON
   ;
+
+array
+  : LBRACE array-item RBRACE
+     {{ $$  = [$2]; }}
+  ;
+
+array-item
+  : array-item COMMA expr
+     {{ $$ = $1 + ',' + $3 }}
+  | expr
+     {{ $$ = $1 }};
 
 statement
   : assignation
@@ -82,20 +106,38 @@ statement
   | cycle
   | write
   | read
-  | comment
   | call
   ;
 
 assignation
-  : ID LBRACKET exp RBRACKET ASSIGN expression SEMICOLON
-  | ID ASSIGN expression SEMICOLON
+  : ID var-cte-exp ASSIGN and-or-expression SEMICOLON
+  | ID ASSIGN and-or-expression SEMICOLON {yy.parser.processAssign($1, $3)}
   ;
 
+
 expression 
-  : exp expression-op exp 
-  | exp
-  | NOT exp
+  : exp _exp2 expression-recursive
   ;
+
+expression-recursive
+  : _exp1 expression
+  | %empty
+  ;
+
+_exp1: expression-op { yy.parser.poperPush($1) };
+_exp2: {yy.parser.processExp()};
+
+and-or-expression
+  : expression _hexp2 and-or-expression-recursive
+  ;
+
+and-or-expression-recursive
+  : _hexp1 and-or-expression
+  | %empty
+  ;
+
+_hexp1: and-or-expression-op { yy.parser.poperPush($1) };
+_hexp2: {yy.parser.processHypExp()};
 
 expression-op
   : GREATER
@@ -106,24 +148,44 @@ expression-op
   | DEEP_DIFF
   | EQUAL
   | DEEP_EQUAL
-  | AND
+  ;
+
+and-or-expression-op
+  : AND
   | OR
   ;
 
-exp
-  : term
-  | term PLUS exp
-  | term MINUS exp
+exp: term _e2 exp-recursive;
+
+exp-recursive
+  : _e1 exp
   | %empty
   ;
 
-term
-  : factor
-  | factor TIMES term
-  | factor DIVIDE term
+exp-op
+  : MINUS
+  | PLUS
+  ;
+
+_e1: exp-op { yy.parser.poperPush($1) };
+_e2: {yy.parser.processTerm()};
+
+term: factor _t2 term-recursive;
+
+term-recursive
+  :  _t1 term
   | %empty 
   ;
-  
+
+_t1: term-op { yy.parser.poperPush($1) };
+_t2: {yy.parser.processFactor()};
+
+term-op
+  :  TIMES
+  |  REST
+  |  DIVIDE
+  ;
+
 factor 
   : LPAREN expression RPAREN
   | factor-op var-cte
@@ -137,22 +199,18 @@ factor-op
   ;
 
 var-cte 
-  : ID
-  | ID LBRACKET var-cte-bracket RBRACKET
-  | CTEI
-  | CTEF
-  | CTES
+  : ID var-cte-exp
+  | ID {yy.parser.addQuadVar($1)} 
+  | CTEI {yy.parser.addQuadConst($1,'int')}
+  | CTEF {yy.parser.addQuadConst($1,'float')}
+  | CTES {yy.parser.addQuadConst($1,'string')}
+  | array
   | call
   ;
 
 var-cte-exp
-  : exp
-  | exp COMMA var-cte-exp
+  : LBRACKET exp RBRACKET var-cte-exp
   | %empty
-  ;
-
-comment
-  : LCOMMENT CTES RCOMMNET
   ;
 
 call
@@ -161,6 +219,7 @@ call
 
 call-exp
   : exp COMMA call-exp
+  | exp
   ;
 
 read
@@ -172,7 +231,7 @@ write
   ;
 
 condition
-  : IF LPAREN expression RPAREN block condition-else SEMICOLON
+  : IF LPAREN and-or-expression RPAREN block condition-else
   ;
 
 condition-else
@@ -190,10 +249,31 @@ cycle-for
   ;
 
 cycle-while
-  : WHILE LPAREN expression RPAREN block
+  : WHILE LPAREN and-or-expression RPAREN block
   ;
 
+%%
 
+var actions = require('./actions');
+const { 
+  createDir, deleteDir, setName,
+  setVars, setType, setTable,
+  addQuadVar, addQuadConst, poperPush,
+  processTerm, processAssign, processFactor, 
+  processExp, processHypExp
+} = actions;
 
-
-  
+parser.createDir         = _                 => createDir();
+parser.setName           = NAME              => setName(NAME);
+parser.deleteDir         = _                 => deleteDir();
+parser.setVars           = ID                => setVars(ID);
+parser.setType           = TYPE              => setType(TYPE);
+parser.setTable          = _                 => setTable();
+parser.addQuadVar        = ID                => addQuadVar(ID);
+parser.addQuadConst      = (DATA, TYPE)      => addQuadConst(DATA, TYPE);
+parser.poperPush         = OP                => poperPush(OP);
+parser.processTerm       = _                 => processTerm();
+parser.processFactor     = _                 => processFactor();
+parser.processAssign     = ID                => processAssign(ID);
+parser.processExp        = _                 => processExp();
+parser.processHypExp     = _                 => processHypExp();
