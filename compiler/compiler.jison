@@ -90,7 +90,7 @@ return-statement
   ;
 
 array
-  : LBRACE array-item RBRACE
+  : LBRACKET array-item RBRACKET
      {{ $$  = [$2]; }}
   ;
 
@@ -231,11 +231,15 @@ write
   ;
 
 condition
-  : IF LPAREN and-or-expression RPAREN block condition-else
+  : IF LPAREN and-or-expression RPAREN _cond1 block condition-else _cond2
   ;
 
+_cond1: {yy.parser.processCond()};
+_cond2: {yy.parser.endCond()};
+_cond3: {yy.parser.processElse()};
+
 condition-else
-  : ELSE block
+  : ELSE _cond3 block
   | %empty
   ;
 
@@ -249,9 +253,12 @@ cycle-for
   ;
 
 cycle-while
-  : WHILE LPAREN and-or-expression RPAREN block
+  : WHILE _while1 LPAREN and-or-expression RPAREN _while2 block _while3
   ;
 
+_while1: { yy.parser.pushJump()};
+_while2: { yy.parser.processWhile()};
+_while3: { yy.parser.endWhile()};
 %%
 
 var actions = require('./actions');
@@ -260,7 +267,9 @@ const {
   setVars, setType, setTable,
   addQuadVar, addQuadConst, poperPush,
   processTerm, processAssign, processFactor, 
-  processExp, processHypExp
+  processExp, processHypExp, 
+  processCond, endCond, processElse,
+  pushJump, processWhile, endWhile
 } = actions;
 
 parser.createDir         = _                 => createDir();
@@ -277,3 +286,9 @@ parser.processFactor     = _                 => processFactor();
 parser.processAssign     = ID                => processAssign(ID);
 parser.processExp        = _                 => processExp();
 parser.processHypExp     = _                 => processHypExp();
+parser.processCond       = _                 => processCond();
+parser.endCond           = _                 => endCond();
+parser.processElse       = _                 => processElse();
+parser.pushJump          = _                 => pushJump();
+parser.processWhile      = _                 => processWhile();
+parser.endWhile          = _                 => endWhile();

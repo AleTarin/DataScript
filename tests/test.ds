@@ -1,7 +1,15 @@
 program myProgram:
-  var a, b: float;
+  var a, b, c: float;
   main {
-    b = 10;
-    a = b > 200;
+    b = 10.0;
+    a = b + 200.0;
+    if (a > b) {
+      c = a + a;
+    } else {
+      c = a;
+    }
+    while ( a < b) {
+      a = a + 1;
+    }
   }
   end
