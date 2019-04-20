@@ -1,15 +1,39 @@
 program myProgram:
-  var a, b, c: float;
+  var a, b, c: float; var d, e: bool; var s: string;
+
+  function fun (a:int, b:int) : int {
+    var s: string;
+    b = 10;
+    a = b * 20;
+  }
+
+  function fun2 (a:float, b:float, d: string) : float {
+    var x: string;
+    a = 10.0;
+    a = a * 20.0;
+  }
+
+  function fun3 (a:float, b:float, d: float) : float {
+    var x: string; var s, e: bool;
+    d = 10.0;
+    a = b * 20.0;
+  }
+
   main {
     b = 10.0;
     a = b + 200.0;
-    if (a > b) {
-      c = a + a;
+    d = a > b;
+    e = a < c;
+    s = "a" + a;
+    if (d == e) {
+      c = a * a * 2;
     } else {
       c = a;
     }
-    while ( a < b) {
+    while ( d && true ) {
       a = a + 1;
     }
+    fun2(a,b,c);
+    print(a);
   }
   end

@@ -1,0 +1,32 @@
+program myProgram:
+  var a, b: int[10]; var c: string[10][10];
+
+  function fun(p1:int[10][20], p2:float, p3:string):void {
+    var x: int;
+    return p1;
+  }
+
+  main {
+    a = 10;
+    b[10] = 20;
+    c = 3;
+    a = a * b * c / a + b +  a;
+    if ( a > b) {
+      a = b;
+    }
+    else {
+      a = 10;
+    }
+
+    foreach ( item in c ) {
+      fun(a,b,c);
+      print("item:" + item);
+    }
+
+    // No sense comment
+    while ( !(a + b > b) && a < c ) {
+      readline("Hola", c);
+      a = b;
+    }
+  }
+  end

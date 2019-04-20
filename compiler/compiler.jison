@@ -15,7 +15,7 @@ _p2: ID { yy.parser.setName($ID) };
 _p3: { yy.parser.deleteDir() };
 
 var 
-  : VAR _v1 var-recursive var-follow
+  : VAR var-recursive var-follow
   | %empty
   ;
 
@@ -29,8 +29,7 @@ var-follow
   : COLON _v2 var-index SEMICOLON var
   | COLON new-structure SEMICOLON var
   ;
-
-_v1: { yy.parser.setTable() };
+ 
 _v2: type { yy.parser.setType($type) };
 _v3: ID { yy.parser.setVars($ID); };
 
@@ -49,18 +48,24 @@ structures
   ;
   
 modules
-  : FUNCTION ID LPAREN params RPAREN COLON module-type block-vars modules
+  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars modules
   | %empty
   ;
+
+_module1: ID { yy.parser.setTable($1) };
+_module2: ID { yy.parser.setParams($1) };
+_module3: type { yy.parser.setParamsType($1)};
+_module4: module-type { yy.parser.setFunType($1)};
 
 module-type
   : type
   | VOID 
   ;
 
-params
-  : ID COLON type var-index
-  | ID COLON type var-index COMMA params
+params : _module2 COLON _module3 var-index params-recursive;
+  
+params-recursive
+  : COMMA params
   | %empty
   ;
 
@@ -76,9 +81,12 @@ block
   ;
 
 block-vars
-  : LBRACE var block-inside RBRACE 
+  : LBRACE var _module5 block-inside RBRACE _module6
   ;
   
+_module6: { yy.parser.deleteFunction(); };
+_module5: { yy.parser.setFunParams()};
+
 block-inside
   : statement block-inside
   | return-statement
@@ -86,7 +94,7 @@ block-inside
   ;
 
 return-statement
-  : RETURN statement SEMICOLON
+  : RETURN exp SEMICOLON
   ;
 
 array
@@ -95,25 +103,24 @@ array
   ;
 
 array-item
-  : array-item COMMA expr
+  : array-item COMMA exp
      {{ $$ = $1 + ',' + $3 }}
-  | expr
+  | exp
      {{ $$ = $1 }};
 
 statement
   : assignation
   | condition
   | cycle
-  | write
-  | read
-  | call
+  | print
+  | read 
+  | call SEMICOLON
   ;
 
 assignation
   : ID var-cte-exp ASSIGN and-or-expression SEMICOLON
   | ID ASSIGN and-or-expression SEMICOLON {yy.parser.processAssign($1, $3)}
   ;
-
 
 expression 
   : exp _exp2 expression-recursive
@@ -204,6 +211,8 @@ var-cte
   | CTEI {yy.parser.addQuadConst($1,'int')}
   | CTEF {yy.parser.addQuadConst($1,'float')}
   | CTES {yy.parser.addQuadConst($1,'string')}
+  | TRUE {yy.parser.addQuadConst($1,'bool')}
+  | FALSE {yy.parser.addQuadConst($1, 'bool')}
   | array
   | call
   ;
@@ -214,19 +223,25 @@ var-cte-exp
   ;
 
 call
-  : ID LPAREN call-exp RPAREN SEMICOLON 
+  : _call1 LPAREN _call2 call-exp RPAREN _call5 
   ;
 
 call-exp
-  : exp COMMA call-exp
+  : exp _call3 COMMA _call4 call-exp
   | exp
   ;
+
+_call1: ID { yy.parser.checkProcedure($ID) };
+_call2: { yy.parser.genERA() };
+_call3: { yy.parser.getArgument() };
+_call4: { yy.parser.nextArgument() };
+_call5: { yy.parser.genGOSUB() };
 
 read
   : READLINE LPAREN exp COMMA ID RPAREN SEMICOLON
   ;
 
-write
+print
   : PRINT LPAREN exp RPAREN SEMICOLON
   ;
 
@@ -269,7 +284,10 @@ const {
   processTerm, processAssign, processFactor, 
   processExp, processHypExp, 
   processCond, endCond, processElse,
-  pushJump, processWhile, endWhile
+  pushJump, processWhile, endWhile,
+  deleteFunction, setFunType, setFunParams,
+  setParams, setParamsType,
+  checkProcedure, genERA, getArgument, nextArgument, genGOSUB
 } = actions;
 
 parser.createDir         = _                 => createDir();
@@ -277,7 +295,7 @@ parser.setName           = NAME              => setName(NAME);
 parser.deleteDir         = _                 => deleteDir();
 parser.setVars           = ID                => setVars(ID);
 parser.setType           = TYPE              => setType(TYPE);
-parser.setTable          = _                 => setTable();
+parser.setTable          = ID                 => setTable(ID);
 parser.addQuadVar        = ID                => addQuadVar(ID);
 parser.addQuadConst      = (DATA, TYPE)      => addQuadConst(DATA, TYPE);
 parser.poperPush         = OP                => poperPush(OP);
@@ -292,3 +310,13 @@ parser.processElse       = _                 => processElse();
 parser.pushJump          = _                 => pushJump();
 parser.processWhile      = _                 => processWhile();
 parser.endWhile          = _                 => endWhile();
+parser.setFunType        = TYPE              => setFunType(TYPE);
+parser.deleteFunction    = _                 => deleteFunction();
+parser.setFunParams      = _                 => setFunParams();
+parser.setParams         = ID                => setParams(ID);
+parser.setParamsType     = TYPE              => setParamsType(TYPE);                   
+parser.checkProcedure    = ID                => checkProcedure(ID);
+parser.genERA            = _                 => genERA();
+parser.getArgument       = _                 => getArgument();
+parser.nextArgument      = _                 => nextArgument();
+parser.genGOSUB          = _                 => genGOSUB();
