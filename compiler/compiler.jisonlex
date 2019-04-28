@@ -3,7 +3,7 @@
 %}
 
 digit                         [0-9]
-float                         [0-9]+"."[0-9]+
+float                         [0-9]+("."[0-9]+)?
 id                            [a-zA-Z][a-zA-Z0-9]*
 
 %%
@@ -25,7 +25,7 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "in"                        return 'IN';
 
 "print"                     return 'PRINT';
-"readLine"                  return 'READ';
+"readline"                  return 'READLINE';
 
 "this"                      return 'THIS';
 "new"                       return 'NEW';
@@ -44,6 +44,26 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "dataset"                   return 'DATASET';
 "vector"                    return 'VECTOR';
 
+"rbind"                     return 'RBIND';                     
+"cbind"                     return 'CBIND';
+"setNames"                  return 'SETNAMES';
+"getNames"                  return 'GETNAMES'; 
+"row"                       return 'ROW'; 
+"col"                       return 'COL';
+"head"                      return 'HEAD';
+"tail"                      return 'TAIL';
+
+"stdev"                     return 'STDEV';
+"range"                     return 'RANGE';
+"min"                       return 'MIN';
+"max"                       return 'MAX';
+"variance"                  return 'VARIANCE';
+"dnorm"                     return 'DNORM';
+"dbinomial"                 return 'DBINOMIAL';
+"duniform"                  return 'DUNIFORM';
+
+"plot"                      return 'PLOT';
+
 "==="                       return 'DEEP_EQUAL';
 "=="                        return 'EQUAL';
 "!=="                       return 'DEEP_DIFF'
@@ -54,9 +74,9 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "<"                         return 'LESSER';
 
 {id}                        return 'ID';
-{float}                     return 'CTEF';
+{float}"f"                     return 'CTEF';
 {digit}+                    return 'CTEI';
-\".*\"                      return 'CTES';
+\"([^\\\"]|\\.)*\"          return 'CTES';
 "true"|"false"              return 'CTEB';
 
 "="                         return 'ASSIGN';

@@ -8,11 +8,12 @@
 
 %%
 
-program: PROGRAM _p1 _p2 COLON var modules MAIN block-vars END _p3 EOF;
+program: PROGRAM _p1 _p2 COLON var modules MAIN _p4 block END _p3 EOF;
 
 _p1: { yy.parser.createDir() };
 _p2: ID { yy.parser.setName($ID) };
 _p3: { yy.parser.deleteDir() };
+_p4: { yy.parser.setMain() };
 
 var 
   : VAR var-recursive var-follow
@@ -38,17 +39,16 @@ var-index
   | %empty
   ;
 
-new-structure
-  : structures { yy.parser.setType($structures) }
-  ;
-
-structures
-  : VECTOR
-  | DATASET
+modules
+  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars modules 
+  | %empty 
   ;
   
-modules
-  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars modules
+module-type: type | VOID ;
+
+params : _module2 COLON _module3 var-index params-recursive;
+params-recursive
+  : COMMA params
   | %empty
   ;
 
@@ -57,56 +57,28 @@ _module2: ID { yy.parser.setParams($1) };
 _module3: type { yy.parser.setParamsType($1)};
 _module4: module-type { yy.parser.setFunType($1)};
 
-module-type
-  : type
-  | VOID 
-  ;
+type: INT | FLOAT | BOOL | STRING | structures ;
+structures : VECTOR | DATASET;
 
-params : _module2 COLON _module3 var-index params-recursive;
-  
-params-recursive
-  : COMMA params
-  | %empty
-  ;
-
-type 
-  : INT 
-  | FLOAT
-  | BOOL
-  | STRING
-  ;
-
-block
-  : LBRACE block-inside RBRACE
-  ;
-
-block-vars
-  : LBRACE var _module5 block-inside RBRACE _module6
-  ;
-  
-_module6: { yy.parser.deleteFunction(); };
-_module5: { yy.parser.setFunParams()};
+block: LBRACE block-inside RBRACE;
+block-vars: LBRACE var _module5 block-inside RBRACE _module6;
 
 block-inside
   : statement block-inside
   | return-statement
   | %empty
   ;
+  
+_module6: { yy.parser.deleteFunction(); };
+_module5: { yy.parser.setFunParams()};
 
-return-statement
-  : RETURN exp SEMICOLON
-  ;
+return-statement: RETURN exp SEMICOLON { yy.parser.setFunParams()};
 
-array
-  : LBRACKET array-item RBRACKET
-     {{ $$  = [$2]; }}
-  ;
-
+array: LBRACKET array-item RBRACKET;
 array-item
-  : array-item COMMA exp
-     {{ $$ = $1 + ',' + $3 }}
-  | exp
-     {{ $$ = $1 }};
+  : array-item COMMA exp { $$ = $1 + ',' + $3 } 
+  | exp { $$ = $1 }
+  ;
 
 statement
   : assignation
@@ -115,6 +87,7 @@ statement
   | print
   | read 
   | call SEMICOLON
+  | native-functions
   ;
 
 assignation
@@ -122,10 +95,7 @@ assignation
   | ID ASSIGN and-or-expression SEMICOLON {yy.parser.processAssign($1, $3)}
   ;
 
-expression 
-  : exp _exp2 expression-recursive
-  ;
-
+expression: exp _exp2 expression-recursive;
 expression-recursive
   : _exp1 expression
   | %empty
@@ -134,10 +104,7 @@ expression-recursive
 _exp1: expression-op { yy.parser.poperPush($1) };
 _exp2: {yy.parser.processExp()};
 
-and-or-expression
-  : expression _hexp2 and-or-expression-recursive
-  ;
-
+and-or-expression: expression _hexp2 and-or-expression-recursive;
 and-or-expression-recursive
   : _hexp1 and-or-expression
   | %empty
@@ -157,28 +124,21 @@ expression-op
   | DEEP_EQUAL
   ;
 
-and-or-expression-op
-  : AND
-  | OR
-  ;
+and-or-expression-op: AND | OR;
 
 exp: term _e2 exp-recursive;
-
 exp-recursive
   : _e1 exp
   | %empty
   ;
 
-exp-op
-  : MINUS
-  | PLUS
-  ;
+exp-op: MINUS | PLUS;
 
 _e1: exp-op { yy.parser.poperPush($1) };
 _e2: {yy.parser.processTerm()};
 
 term: factor _t2 term-recursive;
-
+term-op:  TIMES |  REST |  DIVIDE;
 term-recursive
   :  _t1 term
   | %empty 
@@ -187,11 +147,6 @@ term-recursive
 _t1: term-op { yy.parser.poperPush($1) };
 _t2: {yy.parser.processFactor()};
 
-term-op
-  :  TIMES
-  |  REST
-  |  DIVIDE
-  ;
 
 factor 
   : LPAREN expression RPAREN
@@ -222,9 +177,7 @@ var-cte-exp
   | %empty
   ;
 
-call
-  : _call1 LPAREN _call2 call-exp RPAREN _call5 
-  ;
+call: _call1 LPAREN _call2 call-exp RPAREN _call5;
 
 call-exp
   : exp _call3 COMMA _call4 call-exp
@@ -237,43 +190,70 @@ _call3: { yy.parser.getArgument() };
 _call4: { yy.parser.nextArgument() };
 _call5: { yy.parser.genGOSUB() };
 
-read
-  : READLINE LPAREN exp COMMA ID RPAREN SEMICOLON
-  ;
+read: READLINE LPAREN exp COMMA ID RPAREN SEMICOLON { yy.parser.processReadLine($ID) };
+print: PRINT LPAREN exp RPAREN SEMICOLON { yy.parser.processPrint() };
 
-print
-  : PRINT LPAREN exp RPAREN SEMICOLON
-  ;
-
-condition
-  : IF LPAREN and-or-expression RPAREN _cond1 block condition-else _cond2
+condition: IF LPAREN and-or-expression RPAREN _cond1 block condition-else _cond2;
+condition-else
+  : ELSE _cond3 block
+  | %empty
   ;
 
 _cond1: {yy.parser.processCond()};
 _cond2: {yy.parser.endCond()};
 _cond3: {yy.parser.processElse()};
 
-condition-else
-  : ELSE _cond3 block
-  | %empty
-  ;
+cycle: cycle-for | cycle-while;
 
-cycle
-  : cycle-for
-  | cycle-while
-  ;
-
-cycle-for
-  : FOREACH LPAREN ID IN ID RPAREN block
-  ;
-
-cycle-while
-  : WHILE _while1 LPAREN and-or-expression RPAREN _while2 block _while3
-  ;
+cycle-for: FOREACH LPAREN ID IN ID RPAREN block;
+cycle-while: WHILE _while1 LPAREN and-or-expression RPAREN _while2 block _while3;
 
 _while1: { yy.parser.pushJump()};
 _while2: { yy.parser.processWhile()};
 _while3: { yy.parser.endWhile()};
+
+native-functions
+  : rbind
+  | cbind
+  | setNames
+  | getNames
+  | row
+  | col
+  | head
+  | tail
+  | stdev
+  | range
+  | min
+  | max
+  | variance
+  | dnorm
+  | dbinomial
+  | duniform
+  | plot
+  ;
+
+rbind: RBIND LPAREN ID COMMA ID RPAREN SEMICOLON;
+cbind: CBIND LPAREN ID COMMA ID COMMA exp RPAREN SEMICOLON;
+getNames: GETNAMES LPAREN ID RPAREN;
+setNames: SETNAMES LPAREN ID COMMA VECTOR RPAREN;
+row: ROW LPAREN ID COMMA exp RPAREN;
+col: COL LPAREN ID COMMA exp RPAREN;
+head: HEAD LPAREN ID COMMA exp RPAREN;
+tail: TAIL LPAREN ID COMMA exp RPAREN;
+
+stdev: STDEV LPAREN ID RPAREN; 
+range: RANGE LPAREN ID RPAREN;
+min: MIN LPAREN ID RPAREN;
+max: MAX LPAREN ID RPAREN;
+variance: VARIANCE LPAREN ID RPAREN;
+
+dnorm: DNORM LPAREN exp COMMA exp COMMA exp RPAREN;
+dbinomial: DBINOMAIL LPAREN exp COMMA exp COMMA exp RPAREN;
+duniform: DUNIFORM LPAREN exp COMMA exp COMMA exp RPAREN;
+
+barPlot: PLOT LPAREN ID RPAREN;
+linePlot: PLOT LPAREN ID RPAREN;
+
 %%
 
 var actions = require('./actions');
@@ -286,7 +266,7 @@ const {
   processCond, endCond, processElse,
   pushJump, processWhile, endWhile,
   deleteFunction, setFunType, setFunParams,
-  setParams, setParamsType,
+  setParams, setParamsType, setMain,
   checkProcedure, genERA, getArgument, nextArgument, genGOSUB
 } = actions;
 
@@ -320,3 +300,6 @@ parser.genERA            = _                 => genERA();
 parser.getArgument       = _                 => getArgument();
 parser.nextArgument      = _                 => nextArgument();
 parser.genGOSUB          = _                 => genGOSUB();
+parser.processReadLine   = ID                => processReadLine(ID);
+parser.processPrint      = _                 => processPrint();
+parser.setMain           = _                 => setMain();

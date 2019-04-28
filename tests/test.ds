@@ -9,19 +9,19 @@ program myProgram:
 
   function fun2 (a:float, b:float, d: string) : float {
     var x: string;
-    a = 10.0;
-    a = a * 20.0;
+    a = 10.0f;
+    a = a * 20.0f;
   }
 
   function fun3 (a:float, b:float, d: float) : float {
     var x: string; var s, e: bool;
-    d = 10.0;
-    a = b * 20.0;
+    d = 10.0f;
+    a = b * 20.0f;
   }
 
   main {
-    b = 10.0;
-    a = b + 200.0;
+    b = 10f;
+    a = b + 200.0f;
     d = a > b;
     e = a < c;
     s = "a" + a;
@@ -34,6 +34,7 @@ program myProgram:
       a = a + 1;
     }
     fun2(a,b,c);
-    print(a);
+    print(a+c);
+    readline("a" + "a", a);
   }
   end
