@@ -1,8 +1,10 @@
 const memory = require('../utils/memory.js').Memory;
 const Quads = require('../utils/quads.js').Quads;
+const VM = require('../utils/VM.js').VM;
 
 const constants = require('../utils/constants.js');
 const { findCube, findOp, findType } = constants;
+
 
 var p = {};
 
@@ -16,17 +18,22 @@ let varCount = 0;
 let paramCount = 0;
 let current;
 
-let quads    =  new Quads();
+let quads =  new Quads();
 let mm = new memory();
+
 
 createDir = _ => {
   p = { };
 }
 
 deleteDir = _ => {
-  
-  // mm.print()
+  mm.print()
   quads.print()
+  let vm = new VM(quads, mm);
+  vm.run();
+
+  delete mm;
+  delete quads;
   delete p;
 }
 
@@ -84,12 +91,41 @@ setParamsType = TYPE => {
   }
 }
 
+
+setArr = (ID, D1) => {
+  try {
+    if (pVars[ID]) {
+      throw "ERROR: Duplicated variable: " + ID;
+    } else {
+      pVars[ID] = { name: ID, dims:[parseInt(D1)] };
+      varCount+=D1;
+    }
+  } catch (error) {
+    console.error(error);
+    process.exit();
+  }
+}
+
+setMat = (ID, D1, D2) => {
+  try {
+    if (pVars[ID]) {
+      throw "ERROR: Duplicated variable: " + ID;
+    } else {
+      pVars[ID] = { name: ID, dims:[parseInt(D1), parseInt(D2)] };
+      varCount+=D1;
+    }
+  } catch (error) {
+    console.error(error);
+    process.exit();
+  }
+}
+
 setType = TYPE => {
   try {
     Object.values(pVars).forEach( v => {
       if (mm.get(v.name))
         throw "ERROR: Duplicated variable: " + v.name;
-      mm.set({key: v.name, type: findType(TYPE)})
+      mm.set({key: v.name, type: findType(TYPE), dims: v.dims})
     })
     pVars = [];
   } catch (error) {
@@ -105,7 +141,11 @@ setTable = ID => {
 
 deleteFunction = _ => {
   mm.deleteFunction();
-  quads.push([18, null , null, null])
+  quads.endProcedure();
+}
+
+processReturn = _ => {
+  quads.push(['RETURN', pOp[0], null, null]);
 }
 
 setFunParams = _ => {
@@ -142,7 +182,7 @@ addQuadConst = (DATA, TYPE) => {
       DATA = DATA.substr(1).slice(0, -1);
       break;
     case 'bool':
-      DATA = DATA === 'TRUE'; break
+      DATA = DATA === 'true'; break
   }
   pTypes.push(findType(TYPE))
   pOp.push(mm.set({type: findType(TYPE), sc:'const', value: DATA}))
@@ -164,7 +204,7 @@ processExp = _ => {
       if (result_type == 6) {
         throw "Type mismatch in cond"
       } else {
-        let temp = mm.set({type: result_type});
+        let temp = mm.set({type: result_type, sc:'local'});
         pOp.push(temp);        
         quads.push([operator, left_op , right_op, temp])
         pTypes.push(result_type);     
@@ -203,7 +243,7 @@ processFactor = _ => {
       if (result_type == 6) {
         throw "Type mismatch in */%"
       } else {        
-        let temp = mm.set({type: result_type});
+        let temp = mm.set({type: result_type, sc: 'local'});
         pOp.push(temp);        
         quads.push([operator, left_op , right_op, temp])
         pTypes.push(result_type);     
@@ -228,7 +268,7 @@ processTerm = _ => {
       if (result_type == 6) {
         throw "Type mismatc in sum/res"
       } else {
-        let temp = mm.set({type: result_type});
+        let temp = mm.set({type: result_type, sc: 'local'});
         pOp.push(temp);        
         quads.push([operator, left_op, right_op, temp])
         pTypes.push(result_type);     
@@ -252,7 +292,7 @@ processHypExp = _ => {
       if (result_type == 6) {
         throw `Type mismatch in and/or ${left_type}+${right_type} => ${result_type}`
       } else {
-        let temp = mm.set({type: result_type});
+        let temp = mm.set({type: result_type, sc: 'local'});
         pOp.push(temp);        
         quads.push([operator, left_op, right_op, temp])
         pTypes.push(result_type);     
@@ -269,7 +309,7 @@ processCond = _ => {
     if(pTypes.pop() !== 3 ) throw "Type mismatch, boolean expected in condition"
     else {
       let temp = pOp.pop();
-      quads.push([17, temp ,null,undefined]) // ??? temp or result
+      quads.push([17, temp ,null,undefined])
       pJumps.push(quads.length() - 1);
     }
   } catch (e) {
@@ -284,7 +324,7 @@ endCond = _ => {
 }
 
 fillJump = (end, cont) => {
-  quads.fillJump(end, cont)
+  quads.fill(end, cont)
 }
 
 processElse = _ => {
@@ -346,13 +386,13 @@ nextArgument   = _ => {
 }
 
 genGOSUB       = _ => {
-  quads.push(['GOSUB', current, null, null]); // Intial address ? // Add return statement
+  quads.push(['GOSUB', current, null, null]);
 }
 
 processPrint  = _ => {
   let arg = pOp.pop();
   let argType = pTypes.pop();
-  quads.push(['PRINT', arg, null, null]);
+  quads.push([51, arg, null, null]);
 }
 
 processReadLine = ID => {
@@ -365,8 +405,9 @@ processReadLine = ID => {
 }
 
 setMain = _ => {
-  mm.setCurrentFunc('main');
+  quads.push(['MAIN', null, null,  null]);
 }
+
 
 exports.createDir      = createDir;
 exports.deleteDir      = deleteDir;
@@ -401,4 +442,7 @@ exports.genGOSUB       = genGOSUB;
 exports.processReadLine= processReadLine;
 exports.processPrint   = processPrint;
 exports.setMain        = setMain;
+exports.setArr         = setArr;
+exports.setMat         = setMat;
+exports.processReturn  = processReturn;
 

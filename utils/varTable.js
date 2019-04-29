@@ -6,10 +6,9 @@ class variableTable {
     this.size = 0;
   }
 
-  set({key, type, index, value, S1, LS1, LS2}) {
-    if(key)
-      this.varTable[key] = { key, type, index, S1, LS1, LS2, value};
-    this.memTable[index] = {key, value};
+  set({key, type, index, value, R, D1, D2}) {
+    if(key) this.varTable[key] = { key, type, index, R, D1, D2, value};
+    if(index) this.memTable[index] = { key, type, index, R, D1, D2, value};
     this.size++;
   }
 
@@ -26,6 +25,10 @@ class variableTable {
     return this.get(key);
   }
 
+  setResult(index, value) {
+    this.memTable[index] = {...this.memTable[index], value}
+  }
+
   errorHandler (e) {
     console.error(e);
     process.exit();
@@ -33,6 +36,10 @@ class variableTable {
 
   print () {
     console.log("Tabla de variables:", JSON.stringify(this.varTable))
+  }
+
+  getMemory(){
+    return this.memTable;
   }
 
   clear () {

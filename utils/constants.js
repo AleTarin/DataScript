@@ -662,9 +662,18 @@ const operatations = {
   "<=":  13, /* '<= LESSER_EQUAL' */
   "&&":  14,
   "||":  15,
+  
   "GOTO": 16,
   "GOTOF": 17,
+
   "ENDPROC": 18,
+  "RETURN": 19,
+  "ERA": 20,
+  "GOSUB": 21,
+  "PARAMETER": 22,
+  
+  "PRINT": 51,
+  "READLINE": 52,
 };
 const types  = {
   "int": 0 , 

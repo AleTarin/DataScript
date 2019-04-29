@@ -20,33 +20,37 @@ var
   | %empty
   ;
 
+
+var-types
+  : _v3
+  | _v4
+  | _v5
+  ;
+
 var-recursive 
-  : _v3 
-  | _v3 COMMA var-recursive
+  : var-types
+  | var-types COMMA var-recursive
   | %empty
   ;
 
 var-follow
-  : COLON _v2 var-index SEMICOLON var
+  : COLON _v2 SEMICOLON var
   | COLON new-structure SEMICOLON var
   ;
  
 _v2: type { yy.parser.setType($type) };
 _v3: ID { yy.parser.setVars($ID); };
-
-var-index
-  : LBRACKET CTEI RBRACKET var-index
-  | %empty
-  ;
+_v4: ID LBRACKET CTEI RBRACKET { yy.parser.setArr($ID, $3); };
+_v5: ID LBRACKET CTEI RBRACKET LBRACKET CTEI RBRACKET  { yy.parser.setMat($ID, $3, $6) };
 
 modules
-  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars modules 
+  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars _module5 modules 
   | %empty 
   ;
   
 module-type: type | VOID ;
 
-params : _module2 COLON _module3 var-index params-recursive;
+params : _module2 COLON _module3 params-recursive;
 params-recursive
   : COMMA params
   | %empty
@@ -56,6 +60,7 @@ _module1: ID { yy.parser.setTable($1) };
 _module2: ID { yy.parser.setParams($1) };
 _module3: type { yy.parser.setParamsType($1)};
 _module4: module-type { yy.parser.setFunType($1)};
+_module5:
 
 type: INT | FLOAT | BOOL | STRING | structures ;
 structures : VECTOR | DATASET;
@@ -72,7 +77,7 @@ block-inside
 _module6: { yy.parser.deleteFunction(); };
 _module5: { yy.parser.setFunParams()};
 
-return-statement: RETURN exp SEMICOLON { yy.parser.setFunParams()};
+return-statement: RETURN exp SEMICOLON { yy.parser.processReturn()};
 
 array: LBRACKET array-item RBRACKET;
 array-item
@@ -303,3 +308,6 @@ parser.genGOSUB          = _                 => genGOSUB();
 parser.processReadLine   = ID                => processReadLine(ID);
 parser.processPrint      = _                 => processPrint();
 parser.setMain           = _                 => setMain();
+parser.setArr            = (ID, S1)          => setArr(ID, S1);
+parser.setMat            = (ID, S1, S2)      => setMat(ID, S1, S2);
+parser.processReturn     = _                 => processReturn();

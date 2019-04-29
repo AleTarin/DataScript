@@ -6,8 +6,8 @@ class Memory {
     scope = 'global',
     gi = 0,
     gf = 2500,
-    gb = 5000,
-    gs = 7500,
+    gs = 5000,
+    gb = 7500,
 
     li = 10000,
     lf = 12500,
@@ -22,13 +22,9 @@ class Memory {
 
     this.varTables = {
       global: new variableTable(),
-      local: new variableTable()
+      local: new variableTable(),
+      const: new variableTable()
     }
-
-    this.intList    = [];
-    this.floatList  = [];
-    this.stringList = [];
-    this.boolList   = [];
 
     this.intCount    = 0;
     this.floatCount  = 0;
@@ -56,13 +52,14 @@ class Memory {
   }
 
   set({key, type, sc, value, dims = []}) {
-    let [memory, R, S1, D1, D2] = [0,0,0,0,0];
+    let [memory, R, D1, D2] = [0,null,null,null];
 
     let scope = sc || this.scope; 
 
     if (dims && dims.length ) {
       if (dims.length === 1) {
         D1 = dims[0];
+        R = D1;
         switch (scope) {
           case 'global':
             switch (type) {
@@ -139,33 +136,31 @@ class Memory {
         }
       } 
       if (dims.length === 2) {
-        R = dims[0] * dims[1];
-        S1 = (R / dims[0]);
+        R = (dims[0] * dims[1]);
         D1 = dims[0];
         D2 = dims[1];
-        let Dm = dims[0] * dims[2];
         switch (scope) {
           case 'global':
             switch (type) {
               case 0:
                 memory = this.Gi;
-                this.Gi += Dm;
-                this.intCount += Dm;
+                this.Gi += R;
+                this.intCount += R;
               break;
               case 1:
                 memory = this.Gf;
-                this.Gf += Dm;
-                this.floatCount += Dm;
+                this.Gf += R;
+                this.floatCount += R;
               break;
               case 2:
                 memory = this.Gs;
-                this.Gs += Dm;
-                this.stringCount += Dm;
+                this.Gs += R;
+                this.stringCount += R;
               break;
               case 3:
                 memory = this.Gb;
-                this.Gb += Dm;
-                this.boolCount += Dm;
+                this.Gb += R;
+                this.boolCount += R;
               break;
             } 
           break;
@@ -173,23 +168,23 @@ class Memory {
             switch (type) {
               case 0:
                 memory = this.Li;
-                this.Li += Dm;
-                this.intCount += Dm;
+                this.Li += R;
+                this.intCount += R;
               break;
               case 1:
                 memory = this.Lf;
-                this.Lf += Dm;
-                this.floatCount += Dm;
+                this.Lf += R;
+                this.floatCount += R;
               break;
               case 2:
                 memory = this.Ls;
-                this.Ls += Dm;
-                this.stringCount += Dm;
+                this.Ls += R;
+                this.stringCount += R;
               break;
               case 3:
                 memory = this.Lb;
-                this.Lb += Dm;
-                this.boolCount += Dm;
+                this.Lb += R;
+                this.boolCount += R;
               break;
             }
           break;
@@ -197,23 +192,23 @@ class Memory {
             switch (type) {
               case 0:
                 memory = this.Ci;
-                this.Ci += Dm;
-                this.intCount += Dm;
+                this.Ci += R;
+                this.intCount += R;
               break;
               case 1:
                 memory = this.Cf;
-                this.Cf += Dm;
-                this.floatCount += Dm;
+                this.Cf += R;
+                this.floatCount += R;
               break;
               case 2:
                 memory = this.Cs;
-                this.Cs += Dm;
-                this.stringCount += Dm;
+                this.Cs += R;
+                this.stringCount += R;
               break;
               case 3:
                 memory = this.Cb;
-                this.Cb += Dm;
-                this.boolCount += Dm;
+                this.Cb += R;
+                this.boolCount += R;
               break;
             }
           break;
@@ -295,24 +290,7 @@ class Memory {
         break;
       }
     }
-
-    if (key) {
-      switch (type) {
-        case 0:
-          this.intList.push(key)
-        break;
-        case 1:
-          this.floatList.push(key)
-        break;
-        case 2:
-          this.stringList.push(key)
-        break;
-        case 3:
-          this.boolList.push(key)
-        break;
-      } 
-    }
-    this.varTables[this.scope].set({key, type, index:memory, value, S1, D1, D2});
+    this.varTables[scope].set({key, type, index:memory, value, R, D1, D2});
     return memory;
   }
 
@@ -330,7 +308,35 @@ class Memory {
 
   addCurrFunParams(param) { this.dirFun.addCurrFunParams(param) }
   setCurrentFunc(name) {this.dirFun.setCurrentFunc(name)}
-  setCurrFunType(TYPE) { this.dirFun.setCurrFunType(TYPE) }
+  setCurrFunType(TYPE) {
+    this.dirFun.setCurrFunType(TYPE); 
+    if(TYPE != 'void') {
+      var memory;
+      switch (TYPE) {
+        case 'int':
+          memory = this.Gi;
+          this.Gi++;
+          this.intCount++;
+        break;
+        case 'float':
+          memory = this.Gf;
+          this.Gf++;
+          this.floatCount++;
+        break;
+        case 'string':
+          memory = this.Gs;
+          this.Gs++;
+          this.stringCount++;
+        break;
+        case 'bool':
+          memory = this.Gb;
+          this.Gb++;
+          this.boolCount++;
+        break;
+      } 
+      this.varTables['global'].set({key: 'return', type: TYPE, index: memory}); 
+    }
+  }
   setCurrFunParams(paramCount) { this.dirFun.setCurrFunParams(paramCount) }
   setCurrFunVars(varCount){ this.dirFun.setCurrFunVars(varCount) }
   setCurrFunQuads(quadsCount){   this.dirFun.setCurrFunQuads(quadsCount) }
@@ -343,15 +349,19 @@ class Memory {
   }
 
   deleteFunction() {
-    this.print()
     this.varTables['local'] = new variableTable();
     this.setScope('global');
+  }
+
+  getTable(scope){
+    return this.varTables[scope].getMemory();
   }
 
   print() {
     // console.log(this.dirFun)
     // console.log("Local:", this.varTables['local'])
     // console.log("Global:", this.varTables['global'])
+    console.log("Global:", this.varTables['const'])
   }
 }
 exports.Memory = Memory;
