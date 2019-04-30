@@ -205,7 +205,6 @@ class VM {
             this.localMem[result] = result_value; 
           break;
           case 5: // Assign
-          if(memory_type_left.charAt(1) != memory_type_result.charAt(1)) throw 'Error: Assignation, type mismatch';
           let memory;
           switch(memory_type_left){
             case 'Gi':
@@ -268,7 +267,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in >'
+                throw 'Error: Left operator is not valid in ==='
             }
             switch(memory_type_right){
               case 'Gi':
@@ -290,7 +289,7 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in >'
+                throw 'Error: Right operator is not valid in ==='
             }
 
             result_value = left_value === right_value;
@@ -317,7 +316,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in >'
+                throw 'Error: Left operator is not valid in =='
             }
             switch(memory_type_right){
               case 'Gi':
@@ -339,7 +338,7 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in >'
+                throw 'Error: Right operator is not valid in =='
             }
 
             result_value = left_value == right_value;
@@ -366,7 +365,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in >'
+                throw 'Error: Left operator is not valid in !=='
             }
             switch(memory_type_right){
               case 'Gi':
@@ -388,9 +387,8 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in >'
+                throw 'Error: Right operator is not valid in !=='
             }
-
             result_value = left_value !== right_value;
             this.localMem[result] = result_value; 
           break;
@@ -415,7 +413,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in >'
+                throw 'Error: Left operator is not valid in !='
             }
             switch(memory_type_right){
               case 'Gi':
@@ -437,26 +435,236 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in >'
+                throw 'Error: Right operator is not valid in !='
             }
             result_value = left_value != right_value;
             this.localMem[result] = result_value; 
           break;
           case 10:
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Li':
+              case 'Lf': 
+                left_value = this.localMem[left_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: Left operator is not valid in >'
+            }
+            switch(memory_type_right){
+              case 'Gi':
+              case 'Gf':
+                right_value = this.globalMem[right_op];
+              break;
+              case 'Li':
+              case 'Lf':
+                right_value = this.localMem[right_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                right_value = this.constMem[right_op].value;
+              break;
+              default:
+                throw 'Error: Right operator is not valid in >'
+            }
+            result_value = left_value > right_value;
+            this.localMem[result] = result_value; 
           break;
           case 11:
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Li':
+              case 'Lf': 
+                left_value = this.localMem[left_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: Left operator is not valid in >='
+            }
+            switch(memory_type_right){
+              case 'Gi':
+              case 'Gf':
+                right_value = this.globalMem[right_op];
+              break;
+              case 'Li':
+              case 'Lf':
+                right_value = this.localMem[right_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                right_value = this.constMem[right_op].value;
+              break;
+              default:
+                throw 'Error: Right operator is not valid in >='
+            }
+            result_value = left_value >= right_value;
+            this.localMem[result] = result_value; 
           break;
           case 12:
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Li':
+              case 'Lf': 
+                left_value = this.localMem[left_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: Left operator is not valid in <'
+            }
+            switch(memory_type_right){
+              case 'Gi':
+              case 'Gf':
+                right_value = this.globalMem[right_op];
+              break;
+              case 'Li':
+              case 'Lf':
+                right_value = this.localMem[right_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                right_value = this.constMem[right_op].value;
+              break;
+              default:
+                throw 'Error: Right operator is not valid in <'
+            }
+            result_value = left_value > right_value;
+            this.localMem[result] = result_value; 
           break;
           case 13:
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Li':
+              case 'Lf': 
+                left_value = this.localMem[left_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: Left operator is not valid in <='
+            }
+            switch(memory_type_right){
+              case 'Gi':
+              case 'Gf':
+                right_value = this.globalMem[right_op];
+              break;
+              case 'Li':
+              case 'Lf':
+                right_value = this.localMem[right_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+                right_value = this.constMem[right_op].value;
+              break;
+              default:
+                throw 'Error: Right operator is not valid in <='
+            }
+            result_value = left_value <= right_value;
+            this.localMem[result] = result_value; 
           break;
           case 14:
+            switch(memory_type_left){
+              case 'Gb':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Lb':
+                left_value = this.localMem[left_op];
+              break;
+              case 'Cb':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: Left operator is not valid in &&'
+            }
+            switch(memory_type_right){
+              case 'Gb':
+                right_value = this.globalMem[right_op];
+              break;
+              case 'Lb':
+                right_value = this.localMem[right_op];
+              break;
+              case 'Cb':
+                right_value = this.constMem[right_op].value;
+              break;
+              default:
+                throw 'Error: Right operator is not valid in &&'
+            }
+            result_value = left_value && right_value;
+            this.localMem[result] = result_value; 
           break;
           case 15:
+            switch(memory_type_left){
+              case 'Gb':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Lb':
+                left_value = this.localMem[left_op];
+              break;
+              case 'Cb':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: Left operator is not valid in &&'
+            }
+            switch(memory_type_right){
+              case 'Gb':
+                right_value = this.globalMem[right_op];
+              break;
+              case 'Lb':
+                right_value = this.localMem[right_op];
+              break;
+              case 'Cb':
+                right_value = this.constMem[right_op].value;
+              break;
+              default:
+                throw 'Error: Right operator is not valid in &&'
+            }
+            result_value = left_value || right_value;
+            this.localMem[result] = result_value; 
           break;
           case 16:
+            this.quads.goto(result);
           break;
           case 17:
+            switch(memory_type_left){
+              case 'Gb':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Lb':
+                left_value = this.localMem[left_op];
+              break;
+              case 'Cb':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: Left operator is not valid in GOTO'
+            }
+            
+            if (!left_value){
+              this.quads.goto(result - 1);
+            } 
           break;
           case 18:
           break;
@@ -481,8 +689,9 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in >'
+                throw 'Error: Left operator is not valid in print'              
             }
+            // PRINT DONT REMOVE
             console.log(left_value);
           break;
         }

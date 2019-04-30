@@ -3,6 +3,7 @@ class Quads {
     this.quads = [];
     this.current = 0;
     this.saved = null;
+    this.begin = 0;
   }
 
   push(quad) {
@@ -14,12 +15,16 @@ class Quads {
   }
 
   goto(index){
-    this.current = index;
+    this.current = index - 1;
     return this.quads[index];
   }
   
   next() {
     this.current++;
+  }
+
+  main(){
+    this.begin = this.current;
   }
 
   now() {

@@ -222,7 +222,8 @@ processAssign = ID => {
     let right_type = pTypes.pop();
     let item = mm.get(ID);
     if (item === undefined) throw `Undeclared Variable ${ID}`;
-    if (item.type !== right_type) throw `Type mismatch trying to assing in ${ID}`;
+    let result_type = findCube(item.type, right_type, 5);
+    if (result_type === 6) throw `Type mismatch trying to assing in ${ID}`;
     quads.push([5, right_op ,null, item.index])
   } catch (e) {
     console.error(e);
@@ -400,12 +401,12 @@ processReadLine = ID => {
   let argType = pTypes.pop();
   let obj = mm.get(ID);
   if (obj) {
-    quads.push(['READLINE', arg, null,  obj.index]);
+    quads.push([52, arg, null,  obj.index]);
   }
 }
 
 setMain = _ => {
-  quads.push(['MAIN', null, null,  null]);
+  quads.main();
 }
 
 

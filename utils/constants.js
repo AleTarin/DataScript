@@ -15,7 +15,7 @@ const semanticCube = [
       3, /* '>= GREATER_EQUAL' */
       3, /* '< LESSER' */
       3, /* '<= LESSER_EQUAL' */
-            6, /* '&& AND' */
+      6, /* '&& AND' */
       6, /* '|| OR'*/
     ],
     [ /* float */
@@ -134,7 +134,7 @@ const semanticCube = [
       1, /* '* TIMES' */
       1, /* '/ DIVIDE' */  
       1, /* '% REST' */
-      6, /* = ASSIGN */
+      1, /* = ASSIGN */
       3, /* '=== DEEP_EQUAL' */
       3, /* '== EQUAL' */
       3, /* '!== DEEP_DIFF' */
@@ -221,7 +221,7 @@ const semanticCube = [
     ],
   ],
   [ /* string */
-      [ // int
+    [ // int
       2, /* '+ PLUS' */
       6, /* '- MINUS' */
       6, /* '* TIMES' */
@@ -391,7 +391,7 @@ const semanticCube = [
       6, /* '* TIMES' */
       6, /* '/ DIVIDE' */  
       6, /* '% REST' */
-      6, /* = ASSIGN */
+      3, /* = ASSIGN */
       3, /* '=== DEEP_EQUAL' */
       3, /* '== EQUAL' */
       3, /* '!== DEEP_DIFF' */

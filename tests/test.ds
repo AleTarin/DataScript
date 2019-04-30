@@ -1,44 +1,16 @@
 program myProgram:
   var a, b, c[20], n[3][3], m: float; var d, e: bool; var s: string;
-
-  function fun (a:int, b:int) : int {
-    var s: string;
-    b = 10;
-    a = b - 20;
-  }
-
-  function fun2 (a:float, b:float, d: string) : float {
-    var x: string;
-    a = 5.2f;
-    a = a * 20.0f;
-    return a + 10f;
-  }
-
-  function fun3 (a:float, b:float, d: float) : float {
-    var x: string; var s, e: bool;
-    d = 10.0f;
-    a = d * 20.0f;
-  }
-
   main {
-    b = 10.10f;
-    a = b + 200.1f;
-    print("a: "+a);
-    print("b: "+b);
-    d = a > b;
-    print(d);
-    e = a < c;
-    s = "a" + a;
-    if (d == e) {
-      m = a * a * 2;
-    } else {
-      m = a;
+    d = true;
+    a = 0;
+    while ( d ) {
+      print(a);
+      print(d);
+      a = a + 3;
+      if (a>10) {
+        d = false;
+      }
     }
-    while ( d && true ) {
-      a = a + 1;
-    }
-    fun2(a,b,c);
-    print(a+c);
-    readline("a" + "a", a);
+    readline("a", a);
   }
   end
