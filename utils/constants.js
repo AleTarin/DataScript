@@ -682,7 +682,8 @@ const types  = {
   "bool": 3, 
   "null": 4,   
   "NaN": 5, 
-  "x": 6
+  "x": 6,
+  "void": 7
 };
 
 const findCube = (t1=4, t2=4, op) => semanticCube[t1][t2][op];

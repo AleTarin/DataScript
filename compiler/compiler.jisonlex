@@ -74,7 +74,7 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "<"                         return 'LESSER';
 
 {id}                        return 'ID';
-{float}"f"                     return 'CTEF';
+{float}"f"                  return 'CTEF';
 {digit}+                    return 'CTEI';
 \"([^\\\"]|\\.)*\"          return 'CTES';
 "true"|"false"              return 'CTEB';

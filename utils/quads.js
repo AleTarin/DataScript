@@ -1,17 +1,26 @@
 class Quads {
   constructor(  ) {
-    this.quads = [];
+    this.quads = [[16, null, null, undefined]];
     this.current = 0;
-    this.saved = null;
-    this.begin = 0;
+    this.saved = [];
+    this.begin = undefined;
   }
 
   push(quad) {
     this.quads.push(quad);
   }
 
-  save() {
-    this.saved = this.current;
+  getCurrent() {
+    return this.current;
+  }
+
+  save(index) {
+    index = index ? index : this.current;
+    this.saved.push(index || this.current);
+  }
+
+  getSaved() {
+    return this.saved.pop();
   }
 
   goto(index){
@@ -24,7 +33,11 @@ class Quads {
   }
 
   main(){
-    this.begin = this.current;
+    this.quads[0].splice(3, 1, this.length());
+  }
+
+  gotoMain() {
+    this.current = this.begin;
   }
 
   now() {
@@ -36,7 +49,7 @@ class Quads {
   }
 
   endProcedure () {
-    this.quads.push([18, this.saved , null, null])
+    // this.quads.push([18, null , null, null])
   }
 
   fill(end, count){

@@ -1,7 +1,7 @@
 
 class dirFun {
   constructor()  {
-    this.dirFun = {};
+    this.funcs = {};
     this.currFun = undefined;
   }
 
@@ -10,43 +10,43 @@ class dirFun {
   }
 
   setCurrFunType(type){
-    if (this.currFun) this.dirFun[this.currFun].type = type;
+    if (this.currFun) this.funcs[this.currFun].type = type;
   }
 
   setCurrFunParams(count) {
-    if (this.currFun) this.dirFun[this.currFun].params = count;
+    if (this.currFun) this.funcs[this.currFun].params = count;
   }
 
   setCurrFunQuads(count) {
-    if (this.currFun) this.dirFun[this.currFun].quad = count;
+    if (this.currFun) this.funcs[this.currFun].quad = count;
   }
 
   setCurrFunVars(count) {
-    if (this.currFun) this.dirFun[this.currFun].vars = count;
+    if (this.currFun) this.funcs[this.currFun].vars = count;
   }
 
   getFunc(ID) {
-    return this.dirFun[ID];
+    return this.funcs[ID];
   }
 
   addCurrFunParams(param) {
     if (this.currFun){ 
-      if (this.dirFun[this.currFun].paramTable)
-        this.dirFun[this.currFun].paramTable[param.key] = param;
+      if (this.funcs[this.currFun].paramTable)
+        this.funcs[this.currFun].paramTable.push(param);
       else {
-        this.dirFun[this.currFun].paramTable = {};
-        this.dirFun[this.currFun].paramTable[param.key] = param;
+        this.funcs[this.currFun].paramTable = [];
+        this.funcs[this.currFun].paramTable.push(param);
       }
     }
   }
 
   addFunction(ID) {
     try {
-      if (this.dirFun[ID]){
+      if (this.funcs[ID]){
         throw "Error: duplicated function"
       } else {
         this.currFun = ID;
-        this.dirFun[ID] = {};
+        this.funcs[ID] = {};
         return true;
       }
     } catch (e) {

@@ -44,7 +44,8 @@ _v4: ID LBRACKET CTEI RBRACKET { yy.parser.setArr($ID, $3); };
 _v5: ID LBRACKET CTEI RBRACKET LBRACKET CTEI RBRACKET  { yy.parser.setMat($ID, $3, $6) };
 
 modules
-  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars _module5 modules 
+  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars _module6 modules 
+  | FUNCTION _module1 LPAREN RPAREN COLON  _module4 block-vars _module6 modules 
   | %empty 
   ;
   
@@ -60,13 +61,12 @@ _module1: ID { yy.parser.setTable($1) };
 _module2: ID { yy.parser.setParams($1) };
 _module3: type { yy.parser.setParamsType($1)};
 _module4: module-type { yy.parser.setFunType($1)};
-_module5:
 
 type: INT | FLOAT | BOOL | STRING | structures ;
 structures : VECTOR | DATASET;
 
 block: LBRACE block-inside RBRACE;
-block-vars: LBRACE var _module5 block-inside RBRACE _module6;
+block-vars: LBRACE var _module5 block-inside RBRACE;
 
 block-inside
   : statement block-inside
@@ -182,11 +182,14 @@ var-cte-exp
   | %empty
   ;
 
-call: _call1 LPAREN _call2 call-exp RPAREN _call5;
+call
+  : _call1 LPAREN _call2 call-exp RPAREN _call5
+  | _call1 LPAREN _call2 RPAREN _call5
+  ;
 
 call-exp
   : exp _call3 COMMA _call4 call-exp
-  | exp
+  | exp _call3
   ;
 
 _call1: ID { yy.parser.checkProcedure($ID) };

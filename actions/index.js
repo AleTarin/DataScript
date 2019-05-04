@@ -40,11 +40,11 @@ deleteDir = _ => {
 setName = name => {
   p = {...p, name};
   mm.setScope('global');
-  mm.setCurrFunType('void')
+  mm.setCurrFunType(7);
 }
 
 setFunType = TYPE => {
-  mm.setCurrFunType(TYPE)
+  mm.setCurrFunType(findType(TYPE))
 }
 
 // 
@@ -65,7 +65,7 @@ setVars = ID => {
 setParams = ID => {
   try {
     if (pVars[ID]) {
-      throw "ERROR: Duplicated variable: " + ID;
+      throw "PARAMS ERROR SET: Duplicated variable: " + ID;
     } else {
       pVars[ID] = { name: ID };
       paramCount++;
@@ -79,10 +79,22 @@ setParams = ID => {
 setParamsType = TYPE => {
   try {
     Object.values(pVars).forEach( v => {
-      if (mm.get(v.name))
+      if (mm.getLocal(v.name))
         throw "ERROR: Duplicated variable: " + v.name;
-      mm.set({key: v.name, type: findType(TYPE)})
-      mm.addCurrFunParams({key: v.name, type: findType(TYPE)})
+      let index = mm.set({key: v.name, type: findType(TYPE)})
+      mm.addCurrFunParams({key: v.name, type: findType(TYPE), index})
+    })
+    pVars = [];
+  } catch (error) {
+    console.error(error);
+    process.exit();
+  }
+}
+
+setType = TYPE => {
+  try {
+    Object.values(pVars).forEach( v => {
+      mm.set({key: v.name, type: findType(TYPE), dims: v.dims})
     })
     pVars = [];
   } catch (error) {
@@ -95,7 +107,7 @@ setParamsType = TYPE => {
 setArr = (ID, D1) => {
   try {
     if (pVars[ID]) {
-      throw "ERROR: Duplicated variable: " + ID;
+      throw "ERROR: Duplicated variable: " + ID + pVars[ID];
     } else {
       pVars[ID] = { name: ID, dims:[parseInt(D1)] };
       varCount+=D1;
@@ -120,19 +132,6 @@ setMat = (ID, D1, D2) => {
   }
 }
 
-setType = TYPE => {
-  try {
-    Object.values(pVars).forEach( v => {
-      if (mm.get(v.name))
-        throw "ERROR: Duplicated variable: " + v.name;
-      mm.set({key: v.name, type: findType(TYPE), dims: v.dims})
-    })
-    pVars = [];
-  } catch (error) {
-    console.error(error);
-    process.exit();
-  }
-}
 
 setTable = ID => {
   varCount = 0;
@@ -141,11 +140,13 @@ setTable = ID => {
 
 deleteFunction = _ => {
   mm.deleteFunction();
-  quads.endProcedure();
+  mm.print();
+  quads.push([18, null , null, null])
+  // quads.endProcedure();
 }
 
 processReturn = _ => {
-  quads.push(['RETURN', pOp[0], null, null]);
+  quads.push([19, null, null, pOp[0]]);
 }
 
 setFunParams = _ => {
@@ -163,7 +164,7 @@ addQuadVar = ID => {
       pTypes.push(type)
       pOp.push(index)
     } else {
-      throw `Undefined variable ${ID}`
+      throw `QUAD VAR: Undefined variable ${ID}`
     }
   } catch (e){
     console.error(e);
@@ -361,20 +362,17 @@ checkProcedure  = ID => {
 }
 
 genERA         = _ => {
-  quads.push(['ERA', current ,null, null]);
-  paramCount = 1;
+  quads.push([20, null ,null, current]);
+  paramCount = 0;
 }
 
 getArgument    = _ => {
   try {
     let arg = pOp.pop();
-    let argType = pTypes.pop();
+    pTypes.pop();
     let { paramTable } = mm.getFunc(current);
     if(paramTable) {
-      let params = Object.values(paramTable);
-      if (params[paramCount-1].type === argType) {
-        quads.push(['PARAMETER', arg, paramCount, null]);
-      }
+      quads.push([22, arg, paramCount, current]);
     }  
   } catch (e) {
     console.error(e);
@@ -387,7 +385,12 @@ nextArgument   = _ => {
 }
 
 genGOSUB       = _ => {
-  quads.push(['GOSUB', current, null, null]);
+  quads.push([21,null, null, current]);
+  // let { type } = mm.getFunc(current)
+  // let temp = mm.set({key:current, type, sc: 'local'});
+  // pOp.push(temp);      
+  // pTypes.push(type);
+  // quads.push([5, current, null,temp])
 }
 
 processPrint  = _ => {

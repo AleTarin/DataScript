@@ -1,16 +1,22 @@
+var prompt = require('prompt-sync')();
 class VM {
   constructor( quads, memory ) {
-    this.activeRecord = [];
+    this.activeRecord = [];    
+    this.fnRecord = [];
     this.quads = quads;
     this.localMem = {};
     this.globalMem = {};
     this.constMem = memory.getTable('const');
+    this.dirFunc = memory.getDirFunc();
   }
 
   run() {
     try {
       while (this.quads.now()) {
+        var auxMemory, fnName, t;
+        // console.log(this.quads.now())
         let [operator, left_op, right_op, result ] = this.quads.now();
+        let memory;
         let memory_type_left = this.getMemoryType(left_op);
         let memory_type_right= this.getMemoryType(right_op);
         let memory_type_result = this.getMemoryType(result);
@@ -205,7 +211,7 @@ class VM {
             this.localMem[result] = result_value; 
           break;
           case 5: // Assign
-          let memory;
+          memory = undefined;
           switch(memory_type_left){
             case 'Gi':
             case 'Gf':
@@ -527,7 +533,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in <'
+                throw 'Error: Left operator is not valid in <='
             }
             switch(memory_type_right){
               case 'Gi':
@@ -543,9 +549,9 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in <'
+                throw 'Error: Right operator is not valid in <='
             }
-            result_value = left_value > right_value;
+            result_value = left_value <= right_value;
             this.localMem[result] = result_value; 
           break;
           case 13:
@@ -661,15 +667,127 @@ class VM {
               default:
                 throw 'Error: Left operator is not valid in GOTO'
             }
-            
             if (!left_value){
               this.quads.goto(result - 1);
             } 
           break;
-          case 18:
+          case 18: // ENDPROC
+            this.quads.goto(this.quads.getSaved()+1);
+            this.localMem = this.activeRecord.pop();
+            fnName = this.fnRecord.pop();
+          break;
+          case 19: // RETURN
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              result_value = this.globalMem[result];
+            break;
+            case 'Li':
+            case 'Lf': 
+            case 'Ls':
+            case 'Lb':
+              result_value = this.localMem[result];
+            break;
+            case 'Ci':
+            case 'Cf':
+            case 'Cs':
+            case 'Cb':
+              result_value = this.constMem[result].value;
+            break;
+            default:
+              throw 'Error: Invalid return expression'
+          }
+          var t;
+          switch(memory_type_left[1]){
+            case 'i':
+              t = 0;
+            break;
+            case 'f':
+              t = 1;
+            break;
+            case 's':
+             t = 2;
+            break;
+            case 'b':
+             t = 3
+            break;
+          }
+
+          fnName = this.fnRecord.pop();
+          let {type} = this.dirFunc.getFunc(fnName);
+          
+          if(type !== 7 && type !== t) {
+            throw `Error different return type in ${fnName}, expecting type ${type} got ${t}`
+          }
+
+          this.quads.goto(this.quads.getSaved()+1);
+          this.localMem = this.activeRecord.pop();
+          this.localMem[fnName] = result_value;
+
+          break;
+          case 20: // ERA
+            fnName = result;
+            auxMemory = {};
+          break;
+          case 21: // GOSUB
+            this.activeRecord.push(this.localMem)
+            this.fnRecord.push(result);
+            this.localMem = auxMemory;
+            this.quads.save(this.quads.getCurrent());
+            this.quads.goto(this.dirFunc.getFunc(result).quad);
+
+          break;
+          case 22: // PARAMETER
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                left_value = this.localMem[left_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+              case 'Cs':
+              case 'Cb':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: operator is not valid in assignation'
+            }
+
+            switch(memory_type_left[1]){
+              case 'i':
+                t = 0;
+              break;
+              case 'f':
+                t = 1;
+              break;
+              case 's':
+               t = 2;
+              break;
+              case 'b':
+               t = 3
+              break;
+            }
+            let paramTable = this.dirFunc.getFunc(result).paramTable;
+            let param = paramTable[right_op];
+            if (param.type !== t){
+              throw `Invalid parameter #${right_op} in ${result} call, expecting type ${param.type}, got ${t}`
+            }
+
+            auxMemory[param.index] = left_value; 
+
           break;
           case 51:
-            switch(memory_type_left){
+          switch(memory_type_left){
               case 'Gi':
               case 'Gf':
               case 'Gs':
@@ -694,11 +812,55 @@ class VM {
             // PRINT DONT REMOVE
             console.log(left_value);
           break;
+          case 52:
+            memory = undefined;
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                left_value = this.localMem[left_op];
+              break;
+              case 'Ci':
+              case 'Cf':
+              case 'Cs':
+              case 'Cb':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: operator is not valid in assignation'
+            }
+            switch(memory_type_result){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                memory = this.globalMem;
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                memory = this.localMem;
+              break;
+              default:
+                throw 'Error: variable is not valid in assignation'
+            }
+
+              var ans = prompt(`>> ${left_value} `);
+              memory[result] = ans;
+          break;
         }
         this.quads.next();
       }
     } catch (e) {
-      console.error(e, this.quads.now());
+      console.error(e);
       process.exit();
     }
 

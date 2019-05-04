@@ -1,16 +1,25 @@
 program myProgram:
   var a, b, c[20], n[3][3], m: float; var d, e: bool; var s: string;
+
+  function fun2 () : void {
+    var x: string;
+    print ("inicia: " + a);
+    b = 0-20;
+  }
+
+  function fun (t:int, y:float, zz: int) : int {
+    var z: string;
+    var a,b: int;
+    a = 20;
+    b = 10;
+    fun2();
+    print(a);
+    return a;
+  }
+
   main {
-    d = true;
     a = 0;
-    while ( d ) {
-      print(a);
-      print(d);
-      a = a + 3;
-      if (a>10) {
-        d = false;
-      }
-    }
-    readline("a", a);
+    fun(10, 22.0f);
+    print(b);
   }
   end

@@ -295,7 +295,11 @@ class Memory {
   }
 
   get(KEY) {
-    return this.varTables[this.scope].get(KEY)
+    return this.varTables[this.scope].get(KEY) || this.varTables.global.get(KEY)
+  }
+
+  getLocal(KEY) {
+    return this.varTables.local.get(KEY)
   }
   
   setScope(scope) {
@@ -351,17 +355,26 @@ class Memory {
   deleteFunction() {
     this.varTables['local'] = new variableTable();
     this.setScope('global');
+
+    this.Li = 10000;
+    this.Lf = 12500;
+    this.Ls = 15000;
+    this.Lb = 17500;
   }
 
   getTable(scope){
     return this.varTables[scope].getMemory();
   }
 
+  getDirFunc(){
+    return this.dirFun;
+  }
+
   print() {
-    // console.log(this.dirFun)
+    console.log(this.dirFun)
     // console.log("Local:", this.varTables['local'])
     // console.log("Global:", this.varTables['global'])
-    console.log("Global:", this.varTables['const'])
+    // console.log("Global:", this.varTables['const'])
   }
 }
 exports.Memory = Memory;
