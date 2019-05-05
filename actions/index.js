@@ -157,23 +157,110 @@ setFunParams = _ => {
   paramCount = 0;
 }
 
-addQuadVar = ID => {
+pushVar = ID => {
   try {
     const {type, index} = mm.get(ID) || {index: -1}
     if (index >= 0) {
       pTypes.push(type)
       pOp.push(index)
     } else {
-      throw `QUAD VAR: Undefined variable ${ID}`
+      throw `ERROR VAR: Undefined variable ${ID}`
     }
   } catch (e){
     console.error(e);
     process.exit();
   }
-
 }
 
-addQuadConst = (DATA, TYPE) => {
+pushArr = ID => {
+  try {
+    let S1_type = pTypes.pop();
+    let S1 = pOp.pop();
+
+    if(S1_type !== 0) {
+      throw `ERROR ARRAY: ${ID} invalid dimension type`
+    }
+    const {type, index, D1} = mm.get(ID) || {index: -1}
+    if (index >= 0) {
+
+      if (D1 === 1) {
+        throw `ERROR ARRAY: ${ID} is not an array`
+      }
+
+      let s1_val = mm.exists(S1).value;
+      let key = `${ID}[${s1_val}]`;
+
+      let pointer = mm.exists(key); 
+      if (pointer === undefined) {
+        pointer = mm.set({key,type, sc:'pointer'});
+      } else {
+        pointer = pointer.index;
+      }
+
+      let base    = mm.set({type: 0, sc:'const', value: index});
+      quads.push([23   , S1, 0, D1 ]);
+      quads.push([0, S1, base, pointer]);
+      pTypes.push(type)
+      pOp.push(pointer)
+    } else {
+      throw `ERROR ARRAY: Undefined variable ${ID}`
+    }
+  } catch (e){
+    console.error(e);
+    process.exit();
+  }
+}
+
+pushMat = ID => {
+  try {
+    let S2_type = pTypes.pop();
+    let S2 = pOp.pop();
+    let S1_type = pTypes.pop();
+    let S1 = pOp.pop();
+
+    if(S1_type !== 0 || S2_type !== 0) {
+      throw `ERROR MATRIX ${ID}, invalid dimension type`
+    }
+    const {type, index, D1, D2} = mm.get(ID) || {index: -1}
+    if (index >= 0) {
+
+      if (D1 === 1 && D2 === 1) {
+        throw `ERROR MATRIX: ${ID} is not a matrix`
+      }
+
+      let s1_val = mm.exists(S1).value;
+      let s2_val = mm.exists(S2).value;
+      let key = `${ID}[${s1_val}][${s2_val}]`;
+
+      let pointer = mm.exists(key); 
+      if (pointer === undefined) {
+        pointer = mm.set({key,type, sc:'pointer'});
+      } else {
+        pointer = pointer.index;
+      }
+
+      let temp    = mm.set({type: 0, sc:'local'});
+      let temp2   = mm.set({type: 0, sc:'local'});
+      let temp3   = mm.set({type: 0, sc:'local'});
+      let dim2    = mm.set({type: 0, sc:'const', value: D2});
+      let base    = mm.set({type: 0, sc:'const', value: index});
+      quads.push([23   , S1   , 0    , D1     ]);
+      quads.push([2    , S2   ,  dim2, temp   ]);
+      quads.push([23   , S2   , 0    , D2     ]);
+      quads.push([0    , temp , S2   , temp2  ]);
+      quads.push([0    , temp2, base , pointer]);
+      pTypes.push(type)
+      pOp.push(pointer)
+    } else {
+      throw `ERROR ARR: Undefined variable ${ID}`
+    }
+  } catch (e){
+    console.error(e);
+    process.exit();
+  }
+}
+
+pushConst = (DATA, TYPE) => {
   switch(TYPE){
     case 'int':
       DATA = parseInt(DATA); break;
@@ -221,11 +308,11 @@ processAssign = ID => {
   try {
     let right_op = pOp.pop();
     let right_type = pTypes.pop();
-    let item = mm.get(ID);
-    if (item === undefined) throw `Undeclared Variable ${ID}`;
-    let result_type = findCube(item.type, right_type, 5);
+    let left_op = pOp.pop();
+    let left_type = pTypes.pop();
+    let result_type = findCube(left_type, right_type, 5);
     if (result_type === 6) throw `Type mismatch trying to assing in ${ID}`;
-    quads.push([5, right_op ,null, item.index])
+    quads.push([5, right_op ,null, left_op])
   } catch (e) {
     console.error(e);
     process.exit();
@@ -419,8 +506,10 @@ exports.setName        = setName;
 exports.setType        = setType;
 exports.setVars        = setVars;
 exports.setTable       = setTable;
-exports.addQuadVar     = addQuadVar;
-exports.addQuadConst   = addQuadConst;
+exports.pushVar        = pushVar;
+exports.pushArr        = pushArr;
+exports.pushMat        = pushMat;
+exports.pushConst      = pushConst;
 exports.poperPush      = poperPush;
 exports.processTerm    = processTerm;
 exports.processFactor  = processFactor;

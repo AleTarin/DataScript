@@ -17,19 +17,17 @@ class Memory {
     ci = 20000,
     cf = 22500,
     cs = 25000,
-    cb = 27500)  {
+    cb = 27500,
+    
+    pt = 30000)  {
     this.scope =  scope;
 
     this.varTables = {
       global: new variableTable(),
       local: new variableTable(),
-      const: new variableTable()
+      const: new variableTable(),
+      pointer: new variableTable()
     }
-
-    this.intCount    = 0;
-    this.floatCount  = 0;
-    this.boolCount   = 0;
-    this.stringCount = 0;
 
     this.Gi = gi;
     this.Gf = gf;
@@ -46,250 +44,84 @@ class Memory {
     this.Cs = cs;
     this.Cb = cb;
 
+    this.Pt = pt;
+
     this.size = cs + gf;
 
     this.dirFun = new dirFun();
   }
 
-  set({key, type, sc, value, dims = []}) {
-    let [memory, R, D1, D2] = [0,null,null,null];
-
+  set({key, type, sc, value, dims: [D1 = 1, D2 = 1] = []}) {
     let scope = sc || this.scope; 
-
-    if (dims && dims.length ) {
-      if (dims.length === 1) {
-        D1 = dims[0];
-        R = D1;
-        switch (scope) {
-          case 'global':
-            switch (type) {
-              case 0:
-                memory = this.Gi;
-                this.Gi += D1;
-                this.intCount += D1;
-              break;
-              case 1:
-                memory = this.Gf;
-                this.Gf += D1;
-                this.floatCount += D1;
-              break;
-              case 2:
-                memory = this.Gs;
-                this.Gs += D1;
-                this.stringCount += D1;
-              break;
-              case 3:
-                memory = this.Gb;
-                this.Gb += D1;
-                this.boolCount += D1;
-              break;
-            } 
+    let memory = 0;
+    let R = D1 * D2;
+    switch (scope) {
+      case 'global':
+        switch (type) {
+          case 0:
+            memory = this.Gi;
+            this.Gi += R;
           break;
-          case 'local':
-            switch (type) {
-              case 0:
-                memory = this.Li;
-                this.Li += D1;
-                this.intCount += D1;
-              break;
-              case 1:
-                memory = this.Lf;
-                this.Lf += D1;
-                this.floatCount += D1;
-              break;
-              case 2:
-                memory = this.Ls;
-                this.Ls += D1;
-                this.stringCount += D1;
-              break;
-              case 3:
-                memory = this.Lb;
-                this.Lb += dims[0];
-                this.boolCount += D1;
-              break;
-            }
+          case 1:
+            memory = this.Gf;
+            this.Gf += R;
           break;
-          case 'const':
-            switch (type) {
-              case 0:
-                memory = this.Ci;
-                this.Ci += D1;
-                this.intCount += D1;
-              break;
-              case 1:
-                memory = this.Cf;
-                this.Cf += D1;
-                this.floatCount += D1;
-              break;
-              case 2:
-                memory = this.Cs;
-                this.Cs += D1;
-                this.stringCount += D1;
-              break;
-              case 3:
-                memory = this.Cb;
-                this.Cb += D1;
-                this.boolCount += D1;
-              break;
-            }
+          case 2:
+            memory = this.Gs;
+            this.Gs += R;
+          break;
+          case 3:
+            memory = this.Gb;
+            this.Gb += R;
+          break;
+        } 
+      break;
+      case 'local':
+        switch (type) {
+          case 0:
+            memory = this.Li;
+            this.Li += R;
+          break;
+          case 1:
+            memory = this.Lf;
+            this.Lf += R;
+          break;
+          case 2:
+            memory = this.Ls;
+            this.Ls += R;
+          break;
+          case 3:
+            memory = this.Lb;
+            this.Lb += R;
           break;
         }
-      } 
-      if (dims.length === 2) {
-        R = (dims[0] * dims[1]);
-        D1 = dims[0];
-        D2 = dims[1];
-        switch (scope) {
-          case 'global':
-            switch (type) {
-              case 0:
-                memory = this.Gi;
-                this.Gi += R;
-                this.intCount += R;
-              break;
-              case 1:
-                memory = this.Gf;
-                this.Gf += R;
-                this.floatCount += R;
-              break;
-              case 2:
-                memory = this.Gs;
-                this.Gs += R;
-                this.stringCount += R;
-              break;
-              case 3:
-                memory = this.Gb;
-                this.Gb += R;
-                this.boolCount += R;
-              break;
-            } 
+      break;
+      case 'const':
+        switch (type) {
+          case 0:
+            memory = this.Ci;
+            this.Ci += R;
           break;
-          case 'local':
-            switch (type) {
-              case 0:
-                memory = this.Li;
-                this.Li += R;
-                this.intCount += R;
-              break;
-              case 1:
-                memory = this.Lf;
-                this.Lf += R;
-                this.floatCount += R;
-              break;
-              case 2:
-                memory = this.Ls;
-                this.Ls += R;
-                this.stringCount += R;
-              break;
-              case 3:
-                memory = this.Lb;
-                this.Lb += R;
-                this.boolCount += R;
-              break;
-            }
+          case 1:
+            memory = this.Cf;
+            this.Cf += R;
           break;
-          case 'const':
-            switch (type) {
-              case 0:
-                memory = this.Ci;
-                this.Ci += R;
-                this.intCount += R;
-              break;
-              case 1:
-                memory = this.Cf;
-                this.Cf += R;
-                this.floatCount += R;
-              break;
-              case 2:
-                memory = this.Cs;
-                this.Cs += R;
-                this.stringCount += R;
-              break;
-              case 3:
-                memory = this.Cb;
-                this.Cb += R;
-                this.boolCount += R;
-              break;
-            }
+          case 2:
+            memory = this.Cs;
+            this.Cs += R;
+          break;
+          case 3:
+            memory = this.Cb;
+            this.Cb += R;
           break;
         }
-      }
-    } else {
-      switch (scope) {
-        case 'global':
-          switch (type) {
-            case 0:
-              memory = this.Gi;
-              this.Gi++;
-              this.intCount++;
-            break;
-            case 1:
-              memory = this.Gf;
-              this.Gf++;
-              this.floatCount++;
-            break;
-            case 2:
-              memory = this.Gs;
-              this.Gs++;
-              this.stringCount++;
-            break;
-            case 3:
-              memory = this.Gb;
-              this.Gb++;
-              this.boolCount++;
-            break;
-          } 
-        break;
-        case 'local':
-          switch (type) {
-            case 0:
-              memory = this.Li;
-              this.Li++;
-              this.intCount++;
-            break;
-            case 1:
-              memory = this.Lf;
-              this.Lf++;
-              this.floatCount++;
-            break;
-            case 2:
-              memory = this.Ls;
-              this.Ls++;
-              this.stringCount++;
-            break;
-            case 3:
-              memory = this.Lb;
-              this.Lb++;
-              this.boolCount++;
-            break;
-          }
-        break;
-        case 'const':
-          switch (type) {
-            case 0:
-              memory = this.Ci;
-              this.Ci++;
-              this.intCount++;
-            break;
-            case 1:
-              memory = this.Cf;
-              this.Cf++;
-              this.floatCount++;
-            break;
-            case 2:
-              memory = this.Cs;
-              this.Cs++;
-              this.stringCount++;
-            break;
-            case 3:
-              memory = this.Cb;
-              this.Cb++;
-              this.boolCount++;
-            break;
-          }
-        break;
-      }
+      break;
+      case 'pointer': 
+        memory = this.Pt;
+        this.Pt += R;
+      break;
     }
+      
     this.varTables[scope].set({key, type, index:memory, value, R, D1, D2});
     return memory;
   }
@@ -297,9 +129,17 @@ class Memory {
   get(KEY) {
     return this.varTables[this.scope].get(KEY) || this.varTables.global.get(KEY)
   }
-
+  
   getLocal(KEY) {
     return this.varTables.local.get(KEY)
+  }
+
+  exists(KEY, scope){
+    if (scope){
+      return this.varTables[scope].get(KEY);
+    } else {
+      return this.varTables.global.get(KEY) || this.varTables.local.get(KEY) || this.varTables.pointer.get(KEY) || this.varTables.const.get(KEY);
+    }
   }
   
   setScope(scope) {
@@ -371,10 +211,10 @@ class Memory {
   }
 
   print() {
-    console.log(this.dirFun)
+    // console.log(this.dirFun)
     // console.log("Local:", this.varTables['local'])
     // console.log("Global:", this.varTables['global'])
-    // console.log("Global:", this.varTables['const'])
+    // console.log("Constants:", this.varTables['const'])
   }
 }
 exports.Memory = Memory;

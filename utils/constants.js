@@ -671,6 +671,7 @@ const operatations = {
   "ERA": 20,
   "GOSUB": 21,
   "PARAMETER": 22,
+  "VER": 23,
   
   "PRINT": 51,
   "READLINE": 52,

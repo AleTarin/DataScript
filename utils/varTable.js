@@ -7,8 +7,8 @@ class variableTable {
   }
 
   set({key, type, index, value, R, D1, D2}) {
-    if(key) this.varTable[key] = { key, type, index, R, D1, D2, value};
-    if(index) this.memTable[index] = { key, type, index, R, D1, D2, value};
+    if(key !== undefined) this.varTable[key] = { key, type, index, R, D1, D2, value};
+    if(index !== undefined) this.memTable[index] = { key, type, index, R, D1, D2, value};
     this.size++;
   }
 

@@ -62,8 +62,7 @@ _module2: ID { yy.parser.setParams($1) };
 _module3: type { yy.parser.setParamsType($1)};
 _module4: module-type { yy.parser.setFunType($1)};
 
-type: INT | FLOAT | BOOL | STRING | structures ;
-structures : VECTOR | DATASET;
+type: INT | FLOAT | BOOL | STRING ;
 
 block: LBRACE block-inside RBRACE;
 block-vars: LBRACE var _module5 block-inside RBRACE;
@@ -79,12 +78,6 @@ _module5: { yy.parser.setFunParams()};
 
 return-statement: RETURN exp SEMICOLON { yy.parser.processReturn()};
 
-array: LBRACKET array-item RBRACKET;
-array-item
-  : array-item COMMA exp { $$ = $1 + ',' + $3 } 
-  | exp { $$ = $1 }
-  ;
-
 statement
   : assignation
   | condition
@@ -96,8 +89,13 @@ statement
   ;
 
 assignation
-  : ID var-cte-exp ASSIGN and-or-expression SEMICOLON
-  | ID ASSIGN and-or-expression SEMICOLON {yy.parser.processAssign($1, $3)}
+  : assignation-destination ASSIGN and-or-expression SEMICOLON {yy.parser.processAssign($1)}
+  ;
+
+assignation-destination
+  : id
+  | array 
+  | matrix
   ;
 
 expression: exp _exp2 expression-recursive;
@@ -166,25 +164,24 @@ factor-op
   ;
 
 var-cte 
-  : ID var-cte-exp
-  | ID {yy.parser.addQuadVar($1)} 
-  | CTEI {yy.parser.addQuadConst($1,'int')}
-  | CTEF {yy.parser.addQuadConst($1,'float')}
-  | CTES {yy.parser.addQuadConst($1,'string')}
-  | TRUE {yy.parser.addQuadConst($1,'bool')}
-  | FALSE {yy.parser.addQuadConst($1, 'bool')}
+  : id
   | array
+  | matrix
+  | CTEI {yy.parser.pushConst($1,'int')}
+  | CTEF {yy.parser.pushConst($1,'float')}
+  | CTES {yy.parser.pushConst($1,'string')}
+  | TRUE {yy.parser.pushConst($1,'bool')}
+  | FALSE {yy.parser.pushConst($1, 'bool')}
   | call
   ;
 
-var-cte-exp
-  : LBRACKET exp RBRACKET var-cte-exp
-  | %empty
-  ;
+id: ID {yy.parser.pushVar($1)};
+array: ID LBRACKET exp RBRACKET { yy.parser.pushArr($ID) };
+matrix: ID LBRACKET exp RBRACKET LBRACKET exp RBRACKET {yy.parser.pushMat($ID)};
 
 call
-  : _call1 LPAREN _call2 call-exp RPAREN _call5
-  | _call1 LPAREN _call2 RPAREN _call5
+  : _call1  _call2 call-exp RPAREN _call5
+  | _call1  _call2 RPAREN _call5
   ;
 
 call-exp
@@ -192,7 +189,7 @@ call-exp
   | exp _call3
   ;
 
-_call1: ID { yy.parser.checkProcedure($ID) };
+_call1: ID LPAREN { yy.parser.checkProcedure($ID) };
 _call2: { yy.parser.genERA() };
 _call3: { yy.parser.getArgument() };
 _call4: { yy.parser.nextArgument() };
@@ -268,7 +265,8 @@ var actions = require('./actions');
 const { 
   createDir, deleteDir, setName,
   setVars, setType, setTable,
-  addQuadVar, addQuadConst, poperPush,
+  pushVar, pushConst, poperPush,
+  pushArr, pushMat,
   processTerm, processAssign, processFactor, 
   processExp, processHypExp, 
   processCond, endCond, processElse,
@@ -283,9 +281,11 @@ parser.setName           = NAME              => setName(NAME);
 parser.deleteDir         = _                 => deleteDir();
 parser.setVars           = ID                => setVars(ID);
 parser.setType           = TYPE              => setType(TYPE);
-parser.setTable          = ID                 => setTable(ID);
-parser.addQuadVar        = ID                => addQuadVar(ID);
-parser.addQuadConst      = (DATA, TYPE)      => addQuadConst(DATA, TYPE);
+parser.setTable          = ID                => setTable(ID);
+parser.pushVar           = ID                => pushVar(ID);
+parser.pushArr           = ID                => pushArr(ID);
+parser.pushMat           = ID                => pushMat(ID);
+parser.pushConst         = (DATA, TYPE)      => pushConst(DATA, TYPE);
 parser.poperPush         = OP                => poperPush(OP);
 parser.processTerm       = _                 => processTerm();
 parser.processFactor     = _                 => processFactor();

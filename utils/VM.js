@@ -7,22 +7,35 @@ class VM {
     this.localMem = {};
     this.globalMem = {};
     this.constMem = memory.getTable('const');
+    this.pointerMem = {};
     this.dirFunc = memory.getDirFunc();
   }
 
   run() {
     try {
+      var auxMemory, fnName, t;
+
+
       while (this.quads.now()) {
-        var auxMemory, fnName, t;
+        var memory, left_value, right_value, result_value;
+        var memory_type_left, memory_type_right, memory_type_result;
+        var [operator, left_op, right_op, result ] = this.quads.now();
+        // var memory_type_left = this.getMemoryType(left_op);
+        // var memory_type_right= this.getMemoryType(right_op);
+        // var memory_type_result = this.getMemoryType(result);
+
+        // this.checkifpointer(result);
+
         // console.log(this.quads.now())
-        let [operator, left_op, right_op, result ] = this.quads.now();
-        let memory;
-        let memory_type_left = this.getMemoryType(left_op);
-        let memory_type_right= this.getMemoryType(right_op);
-        let memory_type_result = this.getMemoryType(result);
-        let left_value, right_value, result_value;
+
         switch(operator) {
           case 0: // Suma
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
+
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -65,6 +78,11 @@ class VM {
             this.localMem[result] = result_value; 
           break;
           case 1: // Resta
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -101,6 +119,11 @@ class VM {
             this.localMem[result] = result_value; 
           break;
           case 2: // Mult
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+            
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -137,7 +160,12 @@ class VM {
             result_value = left_value * right_value;
             this.localMem[result] = result_value; 
           break;
-          case 3:
+          case 3: // Division
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -173,7 +201,12 @@ class VM {
             result_value = left_value / right_value;
             this.localMem[result] = result_value; 
           break;
-          case 4:
+          case 4: // MODULE
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -188,7 +221,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in sum'
+                throw 'Error: Left operator is not valid in module'
             }
             switch(memory_type_right){
               case 'Gi':
@@ -204,14 +237,21 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in substration'
+                throw 'Error: Right operator is not valid in module'
             }
 
             result_value = left_value % right_value;
             this.localMem[result] = result_value; 
           break;
           case 5: // Assign
-          memory = undefined;
+          memory_type_left = this.getMemoryType(left_op);
+          memory_type_right= this.getMemoryType(right_op);
+          memory_type_result = this.getMemoryType(result);
+
+          left_op = this.checkifpointer(left_op);
+          right_op = this.checkifpointer(right_op);
+          result = this.checkifpointer(result);
+
           switch(memory_type_left){
             case 'Gi':
             case 'Gf':
@@ -239,20 +279,27 @@ class VM {
             case 'Gf':
             case 'Gs':
             case 'Gb':
-              memory = this.globalMem;
+              this.globalMem[result] = left_value;
             break;
             case 'Li':
             case 'Lf':
             case 'Ls':
             case 'Lb':
-              memory = this.localMem;
+              this.localMem[result] = left_value;
+            break;
+            case 'Pt':
+              this.pointerMem[result] = left_op;
             break;
             default:
               throw 'Error: variable is not valid in assignation'
           }
-          memory[result] = left_value; 
           break;
-          case 6:
+          case 6: // Deep Equal ===
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -301,7 +348,12 @@ class VM {
             result_value = left_value === right_value;
             this.localMem[result] = result_value; 
           break;
-          case 7:
+          case 7: // Equal
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -786,7 +838,30 @@ class VM {
             auxMemory[param.index] = left_value; 
 
           break;
+          case 23:
+            memory_type_left = this.getMemoryType(left_op);
+            switch(memory_type_left){
+              case 'Gi':
+                left_value = this.globalMem[left_op];
+              break;
+              case 'Li':
+                left_value = this.localMem[left_op];
+              break;
+              case 'Ci':
+                left_value = this.constMem[left_op].value;
+              break;
+              default:
+                throw 'Error: dimensions should be integer'
+            }
+
+            if (left_value < right_op || left_value > result ) {
+              throw 'Error: Array index out of range'
+            }
+
+          break;
           case 51:
+          left_op = this.checkifpointer(left_op);
+          memory_type_left = this.getMemoryType(left_op);
           switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -807,7 +882,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in print'              
+                throw 'Error: operator is not valid in print'              
             }
             // PRINT DONT REMOVE
             console.log(left_value);
@@ -834,7 +909,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: operator is not valid in assignation'
+                throw 'Error: operator is not valid in print'
             }
             switch(memory_type_result){
               case 'Gi':
@@ -850,7 +925,7 @@ class VM {
                 memory = this.localMem;
               break;
               default:
-                throw 'Error: variable is not valid in assignation'
+                throw 'Error: variable is not valid in print'
             }
 
               var ans = prompt(`>> ${left_value} `);
@@ -863,7 +938,14 @@ class VM {
       console.error(e);
       process.exit();
     }
+  }
 
+  checkifpointer(op) {
+    if(op >= 30000 && this.pointerMem[op]) {
+      return this.pointerMem[op];
+    } else {
+      return op;
+    } 
   }
 
   getMemoryType(op) {
@@ -881,6 +963,7 @@ class VM {
     if(op>=22500 && op < 25000) return 'Cf'
     if(op>=25000 && op < 27500) return 'Cs'
     if(op>=27500 && op < 30000) return 'Cb'
+    if(op>=30000)               return 'Pt'
   }
 }
 exports.VM = VM;
