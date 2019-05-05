@@ -57,10 +57,14 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "range"                     return 'RANGE';
 "min"                       return 'MIN';
 "max"                       return 'MAX';
+"mean"                      return 'MEAN';
 "variance"                  return 'VARIANCE';
-"dnorm"                     return 'DNORM';
-"dbinomial"                 return 'DBINOMIAL';
-"duniform"                  return 'DUNIFORM';
+"dNormPdf"                  return 'DNORMP';
+"dBinomialPdf"              return 'DBINOMIALP';
+"dUniformPdf"               return 'DUNIFORMP';
+"dNormCdf"                  return 'DNORMC';
+"dBinomialCdf"              return 'DBINOMIALC';
+"dUniformCdf"               return 'DUNIFORMC';
 
 "plot"                      return 'PLOT';
 

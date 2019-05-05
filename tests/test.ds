@@ -1,15 +1,33 @@
 program myProgram:
-  var a, b, c[20], n[3][2], m: float; var d, e: bool; var s[10], x: string;
+  var a, b, c[20], n[3][2], m: int; var d, e: bool; var s[10], x: string;
+
+  function fn(a:int, b:int, y:int) :void {
+    var x: int;
+    x = 0;
+    print(a);
+    c[19] = 20;
+    c[0] = 1;
+    print(b);
+    while(x <= 10) {
+      if ( (x%2) === 0 ) {
+      print(x);
+  
+      }
+      x = x + 1;
+    }
+  }
+
   main {
     a = 10 + 2;
+    c[2] = 20;
     c[1] = 20 * a;
+    c[3] = 4000;
     s[1] = "HOLA";
-    n[1][1] = c[1] % 20;
+    n[1][1] = c[1] / 20;
     a = 20 / 10;
     print(c[1]);
     print(n[1][1]);
+    a = mean(c);
     print(a);
-    readline(s[1],x);
-    print(x);
   }
   end

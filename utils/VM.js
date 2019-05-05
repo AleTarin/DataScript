@@ -1,4 +1,5 @@
 var prompt = require('prompt-sync')();
+var jStat = require('jStat').jStat;
 class VM {
   constructor( quads, memory ) {
     this.activeRecord = [];    
@@ -19,15 +20,8 @@ class VM {
       while (this.quads.now()) {
         var memory, left_value, right_value, result_value;
         var memory_type_left, memory_type_right, memory_type_result;
+        var vector;
         var [operator, left_op, right_op, result ] = this.quads.now();
-        // var memory_type_left = this.getMemoryType(left_op);
-        // var memory_type_right= this.getMemoryType(right_op);
-        // var memory_type_result = this.getMemoryType(result);
-
-        // this.checkifpointer(result);
-
-        // console.log(this.quads.now())
-
         switch(operator) {
           case 0: // Suma
             left_op = this.checkifpointer(left_op);
@@ -35,6 +29,7 @@ class VM {
 
             memory_type_left = this.getMemoryType(left_op);
             memory_type_right= this.getMemoryType(right_op);
+            memory_type_result = this.getMemoryType(result);
 
             switch(memory_type_left){
               case 'Gi':
@@ -73,9 +68,19 @@ class VM {
               break;
               default:
                 throw 'Error: Right operator is not valid in sum'
-            }
+              }
             result_value = left_value + right_value;
-            this.localMem[result] = result_value; 
+            if(memory_type_result === 'Pt'){
+              let type = this.getMemoryType(result_value);
+              if(type[0]==='G')
+                this.globalMem[result_value] = result;
+              else
+                this.localMem[result_value] = result;
+
+            } else {
+              this.localMem[result] = result_value; 
+            }
+            
           break;
           case 1: // Resta
             left_op = this.checkifpointer(left_op);
@@ -287,6 +292,7 @@ class VM {
             break;
             case 'Pt':
               this.pointerMem[result] = left_op;
+
             break;
             default:
               throw 'Error: variable is not valid in assignation'
@@ -892,13 +898,378 @@ class VM {
               default:
                 throw 'Error: dimensions should be integer'
             }
-
             if (left_value < right_op || left_value >= result ) {
               throw 'Error: Array index out of range'
             }
 
           break;
-          case 51:
+          case 30:
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_result = this.getMemoryType(result);
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+                memory = this.globalMem
+              break;
+              case 'Li':
+              case 'Lf':
+                memory = this.localMem;
+              break;
+              default:
+                throw 'Error: STDEV only accepts vectors of integers or floats'
+            }
+            vector = [];
+
+            for (let i = left_op; i < right_op; i++) {
+              let pointer = memory[i];
+              let index = this.pointerMem[pointer];
+              let type = this.getMemoryType(index);
+              let value;
+              switch(type){
+                case 'Gi':
+                case 'Gf':
+                case 'Gs':
+                case 'Gb':
+                  value = this.globalMem[index];
+                break;
+                case 'Li':
+                case 'Lf':
+                case 'Ls':
+                case 'Lb':
+                  value = this.localMem[index];
+                break;
+                case 'Ci':
+                case 'Cf':
+                case 'Cs':
+                case 'Cb':
+                  value = this.constMem[index].value;
+                break;
+              }
+              value && vector.push(value);
+            }
+
+            switch(memory_type_result){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                memory = this.globalMem;
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                memory = this.localMem;
+              break;
+            }
+            memory[result] = jStat.stdev(vector);
+          break;
+          case 31:
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_result = this.getMemoryType(result);
+            switch(memory_type_left){
+              case 'Gi':
+              case 'Gf':
+                memory = this.globalMem
+              break;
+              case 'Li':
+              case 'Lf':
+                memory = this.localMem;
+              break;
+              default:
+                throw 'Error: STDEV only accepts vectors of integers or floats'
+            }
+            vector = [];
+
+            for (let i = left_op; i < right_op; i++) {
+              let pointer = memory[i];
+              let index = this.pointerMem[pointer];
+              let type = this.getMemoryType(index);
+              let value;
+              switch(type){
+                case 'Gi':
+                case 'Gf':
+                case 'Gs':
+                case 'Gb':
+                  value = this.globalMem[index];
+                break;
+                case 'Li':
+                case 'Lf':
+                case 'Ls':
+                case 'Lb':
+                  value = this.localMem[index];
+                break;
+                case 'Ci':
+                case 'Cf':
+                case 'Cs':
+                case 'Cb':
+                  value = this.constMem[index].value;
+                break;
+              }
+              value && vector.push(value);
+            }
+
+            switch(memory_type_result){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                memory = this.globalMem;
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                memory = this.localMem;
+              break;
+            }
+            memory[result] = jStat.max(vector);
+          break;
+          case 32:
+          memory_type_left = this.getMemoryType(left_op);
+          memory_type_result = this.getMemoryType(result);
+          switch(memory_type_left){
+            case 'Gi':
+            case 'Gf':
+              memory = this.globalMem
+            break;
+            case 'Li':
+            case 'Lf':
+              memory = this.localMem;
+            break;
+            default:
+              throw 'Error: STDEV only accepts vectors of integers or floats'
+          }
+          vector = [];
+
+          for (let i = left_op; i < right_op; i++) {
+            let pointer = memory[i];
+            let index = this.pointerMem[pointer];
+            let type = this.getMemoryType(index);
+            let value;
+            switch(type){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                value = this.globalMem[index];
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                value = this.localMem[index];
+              break;
+              case 'Ci':
+              case 'Cf':
+              case 'Cs':
+              case 'Cb':
+                value = this.constMem[index].value;
+              break;
+            }
+            value && vector.push(value);
+          }
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.min(vector);
+        break;
+        case 33:
+          memory_type_left = this.getMemoryType(left_op);
+          memory_type_result = this.getMemoryType(result);
+          switch(memory_type_left){
+            case 'Gi':
+            case 'Gf':
+              memory = this.globalMem
+            break;
+            case 'Li':
+            case 'Lf':
+              memory = this.localMem;
+            break;
+            default:
+              throw 'Error: STDEV only accepts vectors of integers or floats'
+          }
+          vector = [];
+
+          for (let i = left_op; i < right_op; i++) {
+            let pointer = memory[i];
+            let index = this.pointerMem[pointer];
+            let type = this.getMemoryType(index);
+            let value;
+            switch(type){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                value = this.globalMem[index];
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                value = this.localMem[index];
+              break;
+              case 'Ci':
+              case 'Cf':
+              case 'Cs':
+              case 'Cb':
+                value = this.constMem[index].value;
+              break;
+            }
+            value && vector.push(value);
+          }
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.range(vector);
+        break;
+        case 34:
+          memory_type_left = this.getMemoryType(left_op);
+          memory_type_result = this.getMemoryType(result);
+          switch(memory_type_left){
+            case 'Gi':
+            case 'Gf':
+              memory = this.globalMem
+            break;
+            case 'Li':
+            case 'Lf':
+              memory = this.localMem;
+            break;
+            default:
+              throw 'Error: STDEV only accepts vectors of integers or floats'
+          }
+          vector = [];
+
+          for (let i = left_op; i < right_op; i++) {
+            let pointer = memory[i];
+            let index = this.pointerMem[pointer];
+            let type = this.getMemoryType(index);
+            let value;
+            switch(type){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                value = this.globalMem[index];
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                value = this.localMem[index];
+              break;
+              case 'Ci':
+              case 'Cf':
+              case 'Cs':
+              case 'Cb':
+                value = this.constMem[index].value;
+              break;
+            }
+            value && vector.push(value);
+          }
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.variance(vector);
+        break;
+        case 35:
+          memory_type_left = this.getMemoryType(left_op);
+          memory_type_result = this.getMemoryType(result);
+          switch(memory_type_left){
+            case 'Gi':
+            case 'Gf':
+              memory = this.globalMem
+            break;
+            case 'Li':
+            case 'Lf':
+              memory = this.localMem;
+            break;
+            default:
+              throw 'Error: STDEV only accepts vectors of integers or floats'
+          }
+          vector = [];
+
+          for (let i = left_op; i < right_op; i++) {
+            let pointer = memory[i];
+            let index = this.pointerMem[pointer];
+            let type = this.getMemoryType(index);
+            let value;
+            switch(type){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                value = this.globalMem[index];
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                value = this.localMem[index];
+              break;
+              case 'Ci':
+              case 'Cf':
+              case 'Cs':
+              case 'Cb':
+                value = this.constMem[index].value;
+              break;
+            }
+            value && vector.push(value);
+          }
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.mean(vector);
+        break;
+        case 51:
           left_op = this.checkifpointer(left_op);
           memory_type_left = this.getMemoryType(left_op);
           switch(memory_type_left){
@@ -928,7 +1299,7 @@ class VM {
           break;
           case 52:
             left_op = this.checkifpointer(left_op);
-            result = this.checkifpointer(right_op);
+            result = this.checkifpointer(result);
 
             memory_type_left = this.getMemoryType(left_op);
             memory_type_result = this.getMemoryType(result);
@@ -969,13 +1340,15 @@ class VM {
                 memory = this.localMem;
               break;
               default:
-                throw 'Error: variable is not valid in print'
+                throw 'Error: variable is not valid in input'
             }
 
               var ans = prompt(`>> ${left_value} `);
               memory[result] = ans;
           break;
         }
+        // console.log(this.quads.now())
+        // console.log(this.localMem, this.pointerMem)
         this.quads.next();
       }
     } catch (e) {

@@ -85,7 +85,7 @@ statement
   | print
   | read 
   | call SEMICOLON
-  | native-functions
+  | native-functions SEMICOLON
   ;
 
 assignation
@@ -173,6 +173,7 @@ var-cte
   | TRUE {yy.parser.pushConst($1,'bool')}
   | FALSE {yy.parser.pushConst($1, 'bool')}
   | call
+  | native-functions
   ;
 
 id: ID {yy.parser.pushVar($1)};
@@ -190,13 +191,13 @@ call-exp
   ;
 
 _call1: ID LPAREN { yy.parser.checkProcedure($ID) };
-_call2: { yy.parser.genERA() };
+_call2: { yy.parser.pushERA() };
 _call3: { yy.parser.getArgument() };
 _call4: { yy.parser.nextArgument() };
-_call5: { yy.parser.genGOSUB() };
+_call5: { yy.parser.pushGOSUB() };
 
-read: READLINE LPAREN exp COMMA ID RPAREN SEMICOLON { yy.parser.processReadLine($ID) };
-print: PRINT LPAREN exp RPAREN SEMICOLON { yy.parser.processPrint() };
+read: READLINE LPAREN exp COMMA ID RPAREN SEMICOLON { yy.parser.pushReadLine($ID) };
+print: PRINT LPAREN exp RPAREN SEMICOLON { yy.parser.pushPrint() };
 
 condition: IF LPAREN and-or-expression RPAREN _cond1 block condition-else _cond2;
 condition-else
@@ -218,22 +219,8 @@ _while2: { yy.parser.processWhile()};
 _while3: { yy.parser.endWhile()};
 
 native-functions
-  : rbind
-  | cbind
-  | setNames
-  | getNames
-  | row
-  | col
-  | head
-  | tail
-  | stdev
-  | range
-  | min
-  | max
-  | variance
-  | dnorm
-  | dbinomial
-  | duniform
+  : stadistics
+  | distributions
   | plot
   ;
 
@@ -246,16 +233,40 @@ col: COL LPAREN ID COMMA exp RPAREN;
 head: HEAD LPAREN ID COMMA exp RPAREN;
 tail: TAIL LPAREN ID COMMA exp RPAREN;
 
-stdev: STDEV LPAREN ID RPAREN; 
-range: RANGE LPAREN ID RPAREN;
-min: MIN LPAREN ID RPAREN;
-max: MAX LPAREN ID RPAREN;
-variance: VARIANCE LPAREN ID RPAREN;
+stadistics
+  : stdev   
+  | range   
+  | min     
+  | max     
+  | variance
+  | mean    
+  ;
 
-dnorm: DNORM LPAREN exp COMMA exp COMMA exp RPAREN;
-dbinomial: DBINOMAIL LPAREN exp COMMA exp COMMA exp RPAREN;
-duniform: DUNIFORM LPAREN exp COMMA exp COMMA exp RPAREN;
+stdev:    STDEV LPAREN ID RPAREN {yy.parser.pushStdDev($ID)}; 
+range:    RANGE LPAREN ID RPAREN {yy.parser.pushRange($ID)};
+min:      MIN LPAREN ID RPAREN {yy.parser.pushMin($ID)};
+max:      MAX LPAREN ID RPAREN {yy.parser.pushMax($ID)};
+variance: VARIANCE LPAREN ID RPAREN {yy.parser.pushVariance($ID)};
+mean:     MEAN LPAREN ID RPAREN {yy.parser.pushMean($ID)};
 
+distributions
+  :  dNormP     
+  |  dBinomialP 
+  |  dUniformP
+  |  dNormC    
+  |  dBinomialC
+  |  dUniformC
+  ;
+
+dNormP:     DNORMP LPAREN exp COMMA ID RPAREN;
+dBinomialP: DBINOMAILP LPAREN exp COMMA ID RPAREN;
+dUniformP:  DUNIFORMP LPAREN exp COMMA exp COMMA exp RPAREN;
+
+dNormC:     DNORMC LPAREN exp COMMA ID RPAREN;
+dBinomialC: DBINOMAILC LPAREN exp COMMA ID RPAREN;
+dUniformC:  DUNIFORMC LPAREN exp COMMA exp COMMA exp RPAREN;
+
+plot: barPlot | linePlot;
 barPlot: PLOT LPAREN ID RPAREN;
 linePlot: PLOT LPAREN ID RPAREN;
 
@@ -273,7 +284,7 @@ const {
   pushJump, processWhile, endWhile,
   deleteFunction, setFunType, setFunParams,
   setParams, setParamsType, setMain,
-  checkProcedure, genERA, getArgument, nextArgument, genGOSUB
+  checkProcedure, pushERA, getArgument, nextArgument, pushGOSUB
 } = actions;
 
 parser.createDir         = _                 => createDir();
@@ -304,13 +315,19 @@ parser.setFunParams      = _                 => setFunParams();
 parser.setParams         = ID                => setParams(ID);
 parser.setParamsType     = TYPE              => setParamsType(TYPE);                   
 parser.checkProcedure    = ID                => checkProcedure(ID);
-parser.genERA            = _                 => genERA();
+parser.pushERA           = _                 => pushERA();
 parser.getArgument       = _                 => getArgument();
 parser.nextArgument      = _                 => nextArgument();
-parser.genGOSUB          = _                 => genGOSUB();
-parser.processReadLine   = ID                => processReadLine(ID);
-parser.processPrint      = _                 => processPrint();
+parser.pushGOSUB         = _                 => pushGOSUB();
+parser.pushReadLine      = ID                => pushReadLine(ID);
+parser.pushPrint         = _                 => pushPrint();
 parser.setMain           = _                 => setMain();
 parser.setArr            = (ID, S1)          => setArr(ID, S1);
 parser.setMat            = (ID, S1, S2)      => setMat(ID, S1, S2);
 parser.processReturn     = _                 => processReturn();
+parser.pushStdDev        = ID                => pushStdDev(ID);
+parser.pushMax           = ID                => pushMax(ID);
+parser.pushMin           = ID                => pushMin(ID);
+parser.pushRange         = ID                => pushRange(ID);
+parser.pushVariance      = ID                => pushVariance(ID);
+parser.pushMean          = ID                => pushMean(ID);

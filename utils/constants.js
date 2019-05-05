@@ -672,6 +672,13 @@ const operatations = {
   "GOSUB": 21,
   "PARAMETER": 22,
   "VER": 23,
+
+  "STDEV": 30,
+  "MAX": 31,
+  "MIN": 32,
+  "RANGE": 33,
+  "VARIANCE": 34,
+  "MEAN": 35,
   
   "PRINT": 51,
   "READLINE": 52,

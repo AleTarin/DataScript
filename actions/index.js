@@ -16,7 +16,7 @@ let pJumps    = [];
 
 let varCount = 0;
 let paramCount = 0;
-let current;
+let currentProcedure;
 
 let quads =  new Quads();
 let mm = new memory();
@@ -200,8 +200,8 @@ pushArr = ID => {
       let base    = mm.set({type: 0, sc:'const', value: index});
       quads.push([23   , S1, 0, D1 ]);
       quads.push([0, S1, base, pointer]);
-      pTypes.push(type)
-      pOp.push(pointer)
+      pTypes.push(type);
+      pOp.push(pointer);
     } else {
       throw `ERROR ARRAY: Undefined variable ${ID}`
     }
@@ -241,7 +241,6 @@ pushMat = ID => {
 
       let temp    = mm.set({type: 0, sc:'local'});
       let temp2   = mm.set({type: 0, sc:'local'});
-      let temp3   = mm.set({type: 0, sc:'local'});
       let dim2    = mm.set({type: 0, sc:'const', value: D2});
       let base    = mm.set({type: 0, sc:'const', value: index});
       quads.push([23   , S1   , 0    , D1     ]);
@@ -419,7 +418,7 @@ fillJump = (end, cont) => {
 processElse = _ => {
   quads.push([16, null, null, undefined])
   let f = pJumps.pop();
-  pJumps.push(quads.length() - 1)
+  pJumps.push(quads.length() - 1);
   fillJump(f, quads.length());
 }
 
@@ -441,15 +440,15 @@ endWhile = _ => {
 checkProcedure  = ID => {
   try {
     if(mm.getFunc(ID) === undefined) throw `Undefined function ${ID} called`;
-    current = ID;
+    currentProcedure = ID;
   } catch (error) {
     console.error(error);
     process.exit();
   }
 }
 
-genERA         = _ => {
-  quads.push([20, null ,null, current]);
+pushERA         = _ => {
+  quads.push([20, null ,null, currentProcedure]);
   paramCount = 0;
 }
 
@@ -457,9 +456,9 @@ getArgument    = _ => {
   try {
     let arg = pOp.pop();
     pTypes.pop();
-    let { paramTable } = mm.getFunc(current);
+    let { paramTable } = mm.getFunc(currentProcedure);
     if(paramTable) {
-      quads.push([22, arg, paramCount, current]);
+      quads.push([22, arg, paramCount, currentProcedure]);
     }  
   } catch (e) {
     console.error(e);
@@ -471,24 +470,24 @@ nextArgument   = _ => {
   paramCount++;
 }
 
-genGOSUB       = _ => {
-  quads.push([21,null, null, current]);
-  // let { type } = mm.getFunc(current)
+pushGOSUB       = _ => {
+  quads.push([21,null, null, currentProcedure]);
+  // let { type } = mm.getFunc(currentProcedure)
   // let temp = mm.set({key:current, type, sc: 'local'});
   // pOp.push(temp);      
   // pTypes.push(type);
   // quads.push([5, current, null,temp])
 }
 
-processPrint  = _ => {
+pushPrint  = _ => {
   let arg = pOp.pop();
-  let argType = pTypes.pop();
+  pTypes.pop();
   quads.push([51, arg, null, null]);
 }
 
-processReadLine = ID => {
+pushReadLine = ID => {
   let arg = pOp.pop();
-  let argType = pTypes.pop();
+  pTypes.pop();
   let obj = mm.get(ID);
   if (obj) {
     quads.push([52, arg, null,  obj.index]);
@@ -499,6 +498,43 @@ setMain = _ => {
   quads.main();
 }
 
+pushNative   = (ID, fnName, Op) => {
+  try {
+    let memory = mm.get(ID);
+    if (memory){
+      let temp = mm.set({type: 1, sc: 'local'});
+      
+      quads.push([Op,memory.index,memory.R,temp]);
+      pOp.push(temp);        
+      pTypes.push(1);   
+    } else {
+      throw `Error ${fnName}: ${ID} is not defined`
+    }
+  } catch (e) {
+    console.error(e);
+    process.exit();
+  }
+}
+
+
+pushStdDev   = ID => {
+  pushNative(ID, "STDEV", 30)
+}
+pushMax      = ID => {
+  pushNative(ID, "MAX", 31);
+}
+pushMin      = ID => {
+  pushNative(ID, "MIN", 32);
+}
+pushRange    = ID => {
+  pushNative(ID, "RANGE", 33);
+}
+pushVariance = ID => {
+  pushNative(ID, "VARIANCE", 34);
+}
+pushMean = ID => {
+  pushNative(ID, "MEAN", 35);
+}
 
 exports.createDir      = createDir;
 exports.deleteDir      = deleteDir;
@@ -528,14 +564,18 @@ exports.setFunParams   = setFunParams;
 exports.setParams      = setParams;
 exports.setParamsType  = setParamsType;
 exports.checkProcedure = checkProcedure;
-exports.genERA         = genERA;
+exports.pushERA        = pushERA;
 exports.getArgument    = getArgument;
 exports.nextArgument   = nextArgument;
-exports.genGOSUB       = genGOSUB;
-exports.processReadLine= processReadLine;
-exports.processPrint   = processPrint;
+exports.pushGOSUB      = pushGOSUB;
+exports.pushReadLine   = pushReadLine;
+exports.pushPrint      = pushPrint;
 exports.setMain        = setMain;
 exports.setArr         = setArr;
 exports.setMat         = setMat;
 exports.processReturn  = processReturn;
-
+exports.pushStdDev     = pushStdDev  ;
+exports.pushMax        = pushMax     ;
+exports.pushMin        = pushMin     ;
+exports.pushRange      = pushRange   ;
+exports.pushVariance   = pushVariance;
