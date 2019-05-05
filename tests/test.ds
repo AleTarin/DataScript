@@ -1,10 +1,15 @@
 program myProgram:
-  var a, b, c[20], n[3][2], m: float; var d, e: bool; var s: string;
+  var a, b, c[20], n[3][2], m: float; var d, e: bool; var s[10], x: string;
   main {
-    a = 10;
+    a = 10 + 2;
     c[1] = 20 * a;
-    n[1][1] = c[1] * 20;
-    a = 20;
+    s[1] = "HOLA";
+    n[1][1] = c[1] % 20;
+    a = 20 / 10;
     print(c[1]);
+    print(n[1][1]);
+    print(a);
+    readline(s[1],x);
+    print(x);
   }
   end

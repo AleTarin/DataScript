@@ -244,13 +244,11 @@ class VM {
             this.localMem[result] = result_value; 
           break;
           case 5: // Assign
-          memory_type_left = this.getMemoryType(left_op);
-          memory_type_right= this.getMemoryType(right_op);
-          memory_type_result = this.getMemoryType(result);
-
           left_op = this.checkifpointer(left_op);
-          right_op = this.checkifpointer(right_op);
           result = this.checkifpointer(result);
+
+          memory_type_left = this.getMemoryType(left_op);
+          memory_type_result = this.getMemoryType(result);
 
           switch(memory_type_left){
             case 'Gi':
@@ -402,7 +400,12 @@ class VM {
             result_value = left_value == right_value;
             this.localMem[result] = result_value; 
           break;
-          case 8:
+          case 8: // Deep difference
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -450,7 +453,7 @@ class VM {
             result_value = left_value !== right_value;
             this.localMem[result] = result_value; 
           break;
-          case 9:
+          case 9: // Diference
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -498,7 +501,12 @@ class VM {
             result_value = left_value != right_value;
             this.localMem[result] = result_value; 
           break;
-          case 10:
+          case 10: // >
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -534,7 +542,12 @@ class VM {
             result_value = left_value > right_value;
             this.localMem[result] = result_value; 
           break;
-          case 11:
+          case 11: // >=
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -570,7 +583,12 @@ class VM {
             result_value = left_value >= right_value;
             this.localMem[result] = result_value; 
           break;
-          case 12:
+          case 12: // <
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -585,7 +603,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in <='
+                throw 'Error: Left operator is not valid in <'
             }
             switch(memory_type_right){
               case 'Gi':
@@ -601,12 +619,17 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in <='
+                throw 'Error: Right operator is not valid in <'
             }
-            result_value = left_value <= right_value;
+            result_value = left_value < right_value;
             this.localMem[result] = result_value; 
           break;
           case 13:
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -642,7 +665,12 @@ class VM {
             result_value = left_value <= right_value;
             this.localMem[result] = result_value; 
           break;
-          case 14:
+          case 14: // AND
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gb':
                 left_value = this.globalMem[left_op];
@@ -673,6 +701,11 @@ class VM {
             this.localMem[result] = result_value; 
           break;
           case 15:
+            left_op = this.checkifpointer(left_op);
+            right_op = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_right= this.getMemoryType(right_op);
             switch(memory_type_left){
               case 'Gb':
                 left_value = this.globalMem[left_op];
@@ -684,7 +717,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: Left operator is not valid in &&'
+                throw 'Error: Left operator is not valid in ||'
             }
             switch(memory_type_right){
               case 'Gb':
@@ -697,7 +730,7 @@ class VM {
                 right_value = this.constMem[right_op].value;
               break;
               default:
-                throw 'Error: Right operator is not valid in &&'
+                throw 'Error: Right operator is not valid in ||'
             }
             result_value = left_value || right_value;
             this.localMem[result] = result_value; 
@@ -706,6 +739,8 @@ class VM {
             this.quads.goto(result);
           break;
           case 17:
+            left_op = this.checkifpointer(left_op);
+            memory_type_left = this.getMemoryType(left_op);
             switch(memory_type_left){
               case 'Gb':
                 left_value = this.globalMem[left_op];
@@ -729,6 +764,8 @@ class VM {
             fnName = this.fnRecord.pop();
           break;
           case 19: // RETURN
+          result = this.checkifpointer(result);
+          memory_type_result= this.getMemoryType(result);
           switch(memory_type_result){
             case 'Gi':
             case 'Gf':
@@ -792,6 +829,8 @@ class VM {
 
           break;
           case 22: // PARAMETER
+            left_op = this.checkifpointer(left_op);
+            memory_type_left = this.getMemoryType(left_op);
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -838,7 +877,7 @@ class VM {
             auxMemory[param.index] = left_value; 
 
           break;
-          case 23:
+          case 23: // VER (VERIFICAR RANGO DE ARRAYS)
             memory_type_left = this.getMemoryType(left_op);
             switch(memory_type_left){
               case 'Gi':
@@ -854,7 +893,7 @@ class VM {
                 throw 'Error: dimensions should be integer'
             }
 
-            if (left_value < right_op || left_value > result ) {
+            if (left_value < right_op || left_value >= result ) {
               throw 'Error: Array index out of range'
             }
 
@@ -888,7 +927,12 @@ class VM {
             console.log(left_value);
           break;
           case 52:
-            memory = undefined;
+            left_op = this.checkifpointer(left_op);
+            result = this.checkifpointer(right_op);
+
+            memory_type_left = this.getMemoryType(left_op);
+            memory_type_result = this.getMemoryType(result);
+
             switch(memory_type_left){
               case 'Gi':
               case 'Gf':
@@ -909,7 +953,7 @@ class VM {
                 left_value = this.constMem[left_op].value;
               break;
               default:
-                throw 'Error: operator is not valid in print'
+                throw 'Error: operator is not valid in input'
             }
             switch(memory_type_result){
               case 'Gi':
