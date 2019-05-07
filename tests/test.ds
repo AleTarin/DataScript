@@ -1,23 +1,19 @@
-program myProgram:
-  var a, b, c[20], n[3][2], m: int; var d, e: bool; var s[10], x: string;
 
-  function fn(a:int, b:int, y:int) :void {
-    var x: int;
-    x = 0;
-    print(a);
-    c[19] = 20;
-    c[0] = 1;
-    print(b);
-    while(x <= 10) {
-      if ( (x%2) === 0 ) {
-      print(x);
-      }
-      x = x + 1;
-    }
-  }
+
+
+program myProgram:
+	var a1[3][3], a2[3][3], a3[3][3]:int;
+  var i,j,k, aux1, aux2, aux3, aux4 ,lenght: int;
 
   main {
-    e = 0 == false ;
-    print(e);
+    a1[0][0] = 2;
+    a1[0][1] = 0;
+    a1[1][0] = 3;
+
+    print(a1[0][0]);
+    print(a1[0][1]);
+    print(a1[1][0]);
+
+
   }
   end

@@ -9,7 +9,10 @@
     "fiboR": "node compiler tests/fibonacci_recursive.ds",
     "fiboC": "node compiler tests/fibonacci_cicle.ds",
     "factR": "node compiler tests/factorial_recursive.ds",
-    "factC": "node compiler tests/factorial_cicle.ds"
+    "factC": "node compiler tests/factorial_cicle.ds",
+    "sort":  "node compiler tests/bubble.ds",
+    "find":  "node compiler tests/find.ds",
+    "matrix_mult":  "node compiler tests/matrix_mult.ds"
   },
   "repository": {
     "type": "git",

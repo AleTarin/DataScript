@@ -1,0 +1,25 @@
+program myProgram:
+  var a[5], lenght: int;
+  var swapped:bool;
+
+  function find(b:int):void {
+    var i:int;
+    i = 0;
+    while (i < lenght - 1) {
+      if (a[i] == b) {
+        print("index find: " + i);
+      }
+      i = i + 1;
+    }
+  }
+
+  main {
+    a[0] = 3;
+    a[1] = 1;
+    a[2] = 2;
+    a[3] = 3;
+    a[4] = 5;
+    lenght = 5;
+    find(3);
+  }
+  end

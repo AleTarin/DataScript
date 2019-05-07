@@ -16,19 +16,14 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "function"                  return 'FUNCTION';
 "main"                      return 'MAIN';
 "void"                      return 'VOID';
-"return"                    return 'RETURN';
 
 "if"                        return 'IF';
 "else"                      return 'ELSE';
-"foreach"                   return 'FOREACH';
 "while"                     return 'WHILE';
-"in"                        return 'IN';
 
 "print"                     return 'PRINT';
 "readline"                  return 'READLINE';
 
-"this"                      return 'THIS';
-"new"                       return 'NEW';
 "var"                       return 'VAR';
 
 "int"                       return 'INT';
@@ -40,7 +35,7 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "true"                      return 'TRUE';
 "false"                     return "FALSE";
 "null"                      return 'NULL';
-"nan"                       return 'NAN';
+"NaN"                       return 'NAN';
 "dataset"                   return 'DATASET';
 "vector"                    return 'VECTOR';
 
@@ -59,7 +54,6 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 
 "barPlot"                   return 'BARPLOT';
 "linePlot"                  return 'LINEPLOT';
-"piePlot"                   return 'PIEPLOT';
 
 "==="                       return 'DEEP_EQUAL';
 "=="                        return 'EQUAL';

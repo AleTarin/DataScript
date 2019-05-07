@@ -1,14 +1,37 @@
-      var len = arr.length;
-    
-      for (var i = 0; i < len ; i++) {
-        for(var j = 0 ; j < len - i - 1; j++){ // this was missing
-        if (arr[j] > arr[j + 1]) {
-          // swap
-          var temp = arr[j];
-          arr[j] = arr[j+1];
-          arr[j + 1] = temp;
+program myProgram:
+  var a, b, lenght, swap, i[5]: int;
+  var swapped:bool;
+
+  main {
+    i[0] = 3;
+    i[1] = 1;
+    i[2] = 2;
+    i[3] = 2;
+    i[4] = 5;
+    lenght = 5;
+    swapped = true;
+    while (swapped) {
+      a = 0;
+      swapped=false;
+      while (a < lenght - 1) {
+        b = a + 1;
+        if (i[a] > i[b]) {
+            swap = i[a];
+            i[a] = i[b];
+            i[b] = swap;
+            swapped=true;
         }
-       }
+        a = a + 1;  
       }
-      return arr;
     }
+    print("sorted:");
+    print(i[0]);
+    print(i[1]);
+    print(i[2]);
+    print(i[3]);
+    print(i[4]);
+  }
+  end
+
+
+

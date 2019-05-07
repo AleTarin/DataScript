@@ -194,7 +194,7 @@ pushArr = ID => {
     let S1 = pOp.pop();
 
     if(S1_type !== 0) {
-      throw `ERROR ARRAY: ${ID} invalid dimension type`
+      throw `ERROR ARRAY: ${ID} invalid dimension type ${S1_type}`
     }
     const {type, index, D1} = mm.get(ID) || {index: -1}
     if (index >= 0) {
@@ -203,21 +203,12 @@ pushArr = ID => {
         throw `ERROR ARRAY: ${ID} is not an array`
       }
 
-      let s1_val = mm.exists(S1).value;
-      let key = `${ID}[${s1_val}]`;
-
-      let pointer = mm.exists(key); 
-      if (pointer === undefined) {
-        pointer = mm.set({key,type, sc:'pointer'});
-      } else {
-        pointer = pointer.index;
-      }
-
+      pointer = mm.set({type, sc:'local'});
       let base    = mm.set({type: 0, sc:'const', value: index});
       quads.push([23   , S1, 0, D1 ]);
       quads.push([0, S1, base, pointer]);
       pTypes.push(type);
-      pOp.push(pointer);
+      pOp.push(`(${pointer})`);
     } else {
       throw `ERROR ARRAY: Undefined variable ${ID}`
     }
@@ -244,28 +235,18 @@ pushMat = ID => {
         throw `ERROR MATRIX: ${ID} is not a matrix`
       }
 
-      let s1_val = mm.exists(S1).value;
-      let s2_val = mm.exists(S2).value;
-      let key = `${ID}[${s1_val}][${s2_val}]`;
-
-      let pointer = mm.exists(key); 
-      if (pointer === undefined) {
-        pointer = mm.set({key,type, sc:'pointer'});
-      } else {
-        pointer = pointer.index;
-      }
-
       let temp    = mm.set({type: 0, sc:'local'});
       let temp2   = mm.set({type: 0, sc:'local'});
+      let pointer = mm.set({type, sc:'local'});
       let dim2    = mm.set({type: 0, sc:'const', value: D2});
       let base    = mm.set({type: 0, sc:'const', value: index});
       quads.push([23   , S1   , 0    , D1     ]);
-      quads.push([2    , S2   ,  dim2, temp   ]);
+      quads.push([2    , S1   ,  dim2, temp   ]);
       quads.push([23   , S2   , 0    , D2     ]);
       quads.push([0    , temp , S2   , temp2  ]);
       quads.push([0    , temp2, base , pointer]);
-      pTypes.push(type)
-      pOp.push(pointer)
+      pTypes.push(type);
+      pOp.push(`(${pointer})`);
     } else {
       throw `ERROR ARR: Undefined variable ${ID}`
     }

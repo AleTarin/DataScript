@@ -19,6 +19,9 @@ class VM {
     this.dirFunc      = memory.getDirFunc();
   }
 
+  /**
+   * Funcion que recorre los cuadruplos y ejecuta los codigos de operacion
+   */
   run() {
     try {
       var auxMemory, fnName, t;
@@ -80,16 +83,8 @@ class VM {
                 throw 'Error: Right operator is not valid in sum'
               }
             result_value = left_value + right_value;
-            if(memory_type_result === 'Pt'){
-              let type = this.getMemoryType(result_value);
-              if(type[0]==='G')
-                this.globalMem[result_value] = result;
-              else
-                this.localMem[result_value] = result;
-
-            } else {
-              this.localMem[result] = result_value; 
-            }
+            this.localMem[result] = result_value; 
+            
             
           break;
           case 1: // Resta
@@ -300,8 +295,6 @@ class VM {
             case 'Lb':
               this.localMem[result] = left_value;
             break;
-            case 'Pt':
-              this.pointerMem[result] = left_op;
 
             break;
             default:
@@ -914,8 +907,10 @@ class VM {
               default:
                 throw 'Error: dimensions should be integer'
             }
+            
             if (left_value < right_op || left_value >= result ) {
-              throw 'Error: Array index out of range'
+              console.log(left_value, right_op, result, left_value < right_op , left_value >= result);
+              throw 'Error in array: index out of range'
             }
 
           break;
@@ -1079,30 +1074,7 @@ class VM {
           vector = [];
 
           for (let i = left_op; i <= right_op+1; i++) {
-            let pointer = memory[i];
-            let index = this.pointerMem[pointer];
-            let type = this.getMemoryType(index);
-            let value;
-            switch(type){
-              case 'Gi':
-              case 'Gf':
-              case 'Gs':
-              case 'Gb':
-                value = this.globalMem[index];
-              break;
-              case 'Li':
-              case 'Lf':
-              case 'Ls':
-              case 'Lb':
-                value = this.localMem[index];
-              break;
-              case 'Ci':
-              case 'Cf':
-              case 'Cs':
-              case 'Cb':
-                value = this.constMem[index].value;
-              break;
-            }
+            let value = memory[i];
             value && vector.push(value);
           }
           this.paramStack.push(vector);
@@ -1391,14 +1363,25 @@ class VM {
     }
   }
 
+  /**
+   * Funcion que determina una direccion de memoria es un apuntador, 
+   * de ser asi, regresa la direccion de memoria a la que apunta
+   * @param {int} op 
+   * @returns Direccion de memoria
+   */
   checkifpointer(op) {
-    if(op >= 30000 && this.pointerMem[op]) {
-      return this.pointerMem[op];
+    if(op[0] === '(') {
+      return this.localMem[parseInt(op.slice(1,-1))];
     } else {
       return op;
     } 
   }
 
+  /**
+   * Obtener tipo de memoria a partir de los rangos de memoria 
+   * @param {int} op 
+   * @returns String con tipo de memoria
+   */
   getMemoryType(op) {
     if(op>=0    && op < 2500)   return 'Gi'
     if(op>=2500 && op < 5000)   return 'Gf'
@@ -1414,7 +1397,6 @@ class VM {
     if(op>=22500 && op < 25000) return 'Cf'
     if(op>=25000 && op < 27500) return 'Cs'
     if(op>=27500 && op < 30000) return 'Cb'
-    if(op>=30000)               return 'Pt'
   }
 }
 exports.VM = VM;
