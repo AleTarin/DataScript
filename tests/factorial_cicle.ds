@@ -1,0 +1,21 @@
+program myProgram:
+  var n, resultado: int;
+
+  function factorial():void {
+    resultado = resultado * n;
+    n = n-1;
+    if(n>0){
+      factorial();
+    }
+  }
+
+  main {
+    readline("N:", n);
+    resultado = 1;
+    while(n>0){
+      resultado = resultado * n;
+      n = n - 1;
+    }
+    print(resultado);
+  }
+  end

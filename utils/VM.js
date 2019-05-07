@@ -1,15 +1,22 @@
 var prompt = require('prompt-sync')();
 var jStat = require('jStat').jStat;
+var http = require('http');
+var fs = require('fs');
+var generate = require('node-chartist');
+const co = require('co');
+const path = require('path');
+ 
 class VM {
   constructor( quads, memory ) {
     this.activeRecord = [];    
-    this.fnRecord = [];
-    this.quads = quads;
-    this.localMem = {};
-    this.globalMem = {};
-    this.constMem = memory.getTable('const');
-    this.pointerMem = {};
-    this.dirFunc = memory.getDirFunc();
+    this.fnRecord     = [];
+    this.paramStack   = [];
+    this.localMem     = {};
+    this.globalMem    = {};
+    this.pointerMem   = {};
+    this.quads        = quads;
+    this.constMem     = memory.getTable('const');
+    this.dirFunc      = memory.getDirFunc();
   }
 
   run() {
@@ -21,12 +28,15 @@ class VM {
         var memory, left_value, right_value, result_value;
         var memory_type_left, memory_type_right, memory_type_result;
         var vector;
+        var x,a,b, series, labels, fileName;
         var [operator, left_op, right_op, result ] = this.quads.now();
         switch(operator) {
           case 0: // Suma
+            // Si el operador izquierdo o el operador derecho son apuntadores, obtener la direccion dentro del apuntador
             left_op = this.checkifpointer(left_op);
             right_op = this.checkifpointer(right_op);
 
+            // Obtener el tipo de memoria de cada elemento del cuadruplo
             memory_type_left = this.getMemoryType(left_op);
             memory_type_right= this.getMemoryType(right_op);
             memory_type_result = this.getMemoryType(result);
@@ -741,12 +751,17 @@ class VM {
             result_value = left_value || right_value;
             this.localMem[result] = result_value; 
           break;
-          case 16:
+          case 16: // GOTO
+            // Ir al indice del cuadruplo marcado por resultado
             this.quads.goto(result);
           break;
-          case 17:
+          case 17: // GOTOF
+            // Obtener el quadruplo izquierdo y su tipo
             left_op = this.checkifpointer(left_op);
             memory_type_left = this.getMemoryType(left_op);
+
+            // Dependiendo del tipo de memoria, sacar el valor de la pila correspondiente
+            
             switch(memory_type_left){
               case 'Gb':
                 left_value = this.globalMem[left_op];
@@ -760,8 +775,9 @@ class VM {
               default:
                 throw 'Error: Left operator is not valid in GOTO'
             }
+            // Si es falso, ir al indice anterior del marcado en el cuadruplo 
             if (!left_value){
-              this.quads.goto(result - 1);
+              this.quads.goto(result);
             } 
           break;
           case 18: // ENDPROC
@@ -904,50 +920,7 @@ class VM {
 
           break;
           case 30:
-            memory_type_left = this.getMemoryType(left_op);
             memory_type_result = this.getMemoryType(result);
-            switch(memory_type_left){
-              case 'Gi':
-              case 'Gf':
-                memory = this.globalMem
-              break;
-              case 'Li':
-              case 'Lf':
-                memory = this.localMem;
-              break;
-              default:
-                throw 'Error: STDEV only accepts vectors of integers or floats'
-            }
-            vector = [];
-
-            for (let i = left_op; i < right_op; i++) {
-              let pointer = memory[i];
-              let index = this.pointerMem[pointer];
-              let type = this.getMemoryType(index);
-              let value;
-              switch(type){
-                case 'Gi':
-                case 'Gf':
-                case 'Gs':
-                case 'Gb':
-                  value = this.globalMem[index];
-                break;
-                case 'Li':
-                case 'Lf':
-                case 'Ls':
-                case 'Lb':
-                  value = this.localMem[index];
-                break;
-                case 'Ci':
-                case 'Cf':
-                case 'Cs':
-                case 'Cb':
-                  value = this.constMem[index].value;
-                break;
-              }
-              value && vector.push(value);
-            }
-
             switch(memory_type_result){
               case 'Gi':
               case 'Gf':
@@ -962,52 +935,49 @@ class VM {
                 memory = this.localMem;
               break;
             }
+            vector = this.paramStack.pop();
             memory[result] = jStat.stdev(vector);
           break;
           case 31:
-            memory_type_left = this.getMemoryType(left_op);
             memory_type_result = this.getMemoryType(result);
-            switch(memory_type_left){
+            switch(memory_type_result){
               case 'Gi':
               case 'Gf':
-                memory = this.globalMem
+              case 'Gs':
+              case 'Gb':
+                memory = this.globalMem;
               break;
               case 'Li':
               case 'Lf':
+              case 'Ls':
+              case 'Lb':
                 memory = this.localMem;
               break;
-              default:
-                throw 'Error: STDEV only accepts vectors of integers or floats'
             }
-            vector = [];
-
-            for (let i = left_op; i < right_op; i++) {
-              let pointer = memory[i];
-              let index = this.pointerMem[pointer];
-              let type = this.getMemoryType(index);
-              let value;
-              switch(type){
-                case 'Gi':
-                case 'Gf':
-                case 'Gs':
-                case 'Gb':
-                  value = this.globalMem[index];
-                break;
-                case 'Li':
-                case 'Lf':
-                case 'Ls':
-                case 'Lb':
-                  value = this.localMem[index];
-                break;
-                case 'Ci':
-                case 'Cf':
-                case 'Cs':
-                case 'Cb':
-                  value = this.constMem[index].value;
-                break;
-              }
-              value && vector.push(value);
+            vector = this.paramStack.pop();
+            memory[result] = jStat.max(vector);
+          break;
+          case 32:
+            memory_type_result = this.getMemoryType(result);
+            switch(memory_type_result){
+              case 'Gi':
+              case 'Gf':
+              case 'Gs':
+              case 'Gb':
+                memory = this.globalMem;
+              break;
+              case 'Li':
+              case 'Lf':
+              case 'Ls':
+              case 'Lb':
+                memory = this.localMem;
+              break;
             }
+            vector = this.paramStack.pop();
+            memory[result] = jStat.min(vector);
+          break;
+          case 33:
+            memory_type_result = this.getMemoryType(result);
 
             switch(memory_type_result){
               case 'Gi':
@@ -1023,175 +993,11 @@ class VM {
                 memory = this.localMem;
               break;
             }
-            memory[result] = jStat.max(vector);
-          break;
-          case 32:
-          memory_type_left = this.getMemoryType(left_op);
-          memory_type_result = this.getMemoryType(result);
-          switch(memory_type_left){
-            case 'Gi':
-            case 'Gf':
-              memory = this.globalMem
-            break;
-            case 'Li':
-            case 'Lf':
-              memory = this.localMem;
-            break;
-            default:
-              throw 'Error: STDEV only accepts vectors of integers or floats'
-          }
-          vector = [];
-
-          for (let i = left_op; i < right_op; i++) {
-            let pointer = memory[i];
-            let index = this.pointerMem[pointer];
-            let type = this.getMemoryType(index);
-            let value;
-            switch(type){
-              case 'Gi':
-              case 'Gf':
-              case 'Gs':
-              case 'Gb':
-                value = this.globalMem[index];
-              break;
-              case 'Li':
-              case 'Lf':
-              case 'Ls':
-              case 'Lb':
-                value = this.localMem[index];
-              break;
-              case 'Ci':
-              case 'Cf':
-              case 'Cs':
-              case 'Cb':
-                value = this.constMem[index].value;
-              break;
-            }
-            value && vector.push(value);
-          }
-
-          switch(memory_type_result){
-            case 'Gi':
-            case 'Gf':
-            case 'Gs':
-            case 'Gb':
-              memory = this.globalMem;
-            break;
-            case 'Li':
-            case 'Lf':
-            case 'Ls':
-            case 'Lb':
-              memory = this.localMem;
-            break;
-          }
-          memory[result] = jStat.min(vector);
-        break;
-        case 33:
-          memory_type_left = this.getMemoryType(left_op);
-          memory_type_result = this.getMemoryType(result);
-          switch(memory_type_left){
-            case 'Gi':
-            case 'Gf':
-              memory = this.globalMem
-            break;
-            case 'Li':
-            case 'Lf':
-              memory = this.localMem;
-            break;
-            default:
-              throw 'Error: STDEV only accepts vectors of integers or floats'
-          }
-          vector = [];
-
-          for (let i = left_op; i < right_op; i++) {
-            let pointer = memory[i];
-            let index = this.pointerMem[pointer];
-            let type = this.getMemoryType(index);
-            let value;
-            switch(type){
-              case 'Gi':
-              case 'Gf':
-              case 'Gs':
-              case 'Gb':
-                value = this.globalMem[index];
-              break;
-              case 'Li':
-              case 'Lf':
-              case 'Ls':
-              case 'Lb':
-                value = this.localMem[index];
-              break;
-              case 'Ci':
-              case 'Cf':
-              case 'Cs':
-              case 'Cb':
-                value = this.constMem[index].value;
-              break;
-            }
-            value && vector.push(value);
-          }
-
-          switch(memory_type_result){
-            case 'Gi':
-            case 'Gf':
-            case 'Gs':
-            case 'Gb':
-              memory = this.globalMem;
-            break;
-            case 'Li':
-            case 'Lf':
-            case 'Ls':
-            case 'Lb':
-              memory = this.localMem;
-            break;
-          }
-          memory[result] = jStat.range(vector);
+            vector = this.paramStack.pop();
+            memory[result] = jStat.range(vector);
         break;
         case 34:
-          memory_type_left = this.getMemoryType(left_op);
           memory_type_result = this.getMemoryType(result);
-          switch(memory_type_left){
-            case 'Gi':
-            case 'Gf':
-              memory = this.globalMem
-            break;
-            case 'Li':
-            case 'Lf':
-              memory = this.localMem;
-            break;
-            default:
-              throw 'Error: STDEV only accepts vectors of integers or floats'
-          }
-          vector = [];
-
-          for (let i = left_op; i < right_op; i++) {
-            let pointer = memory[i];
-            let index = this.pointerMem[pointer];
-            let type = this.getMemoryType(index);
-            let value;
-            switch(type){
-              case 'Gi':
-              case 'Gf':
-              case 'Gs':
-              case 'Gb':
-                value = this.globalMem[index];
-              break;
-              case 'Li':
-              case 'Lf':
-              case 'Ls':
-              case 'Lb':
-                value = this.localMem[index];
-              break;
-              case 'Ci':
-              case 'Cf':
-              case 'Cs':
-              case 'Cb':
-                value = this.constMem[index].value;
-              break;
-            }
-            value && vector.push(value);
-          }
-
           switch(memory_type_result){
             case 'Gi':
             case 'Gf':
@@ -1206,26 +1012,73 @@ class VM {
               memory = this.localMem;
             break;
           }
+          vector = this.paramStack.pop();
           memory[result] = jStat.variance(vector);
         break;
         case 35:
-          memory_type_left = this.getMemoryType(left_op);
           memory_type_result = this.getMemoryType(result);
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          vector = this.paramStack.pop();
+          memory[result] = jStat.mean(vector);
+        break;
+        case 39:
+          memory_type_result = this.getMemoryType(result);
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              result_value = this.globalMem[result];
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              result_value = this.localMem[result];
+            break;
+            case 'Ci':
+            case 'Cf':
+            case 'Cs':
+            case 'Cb':
+              result_value = this.constMem[result].value;
+            break;
+            default:
+              throw 'Error: operator is not valid in param'
+          }
+          this.paramStack.push(result_value);
+        break;
+        case 40:
+          memory_type_left = this.getMemoryType(left_op);
           switch(memory_type_left){
             case 'Gi':
             case 'Gf':
+            case 'Gs':
+            case 'Gb':
               memory = this.globalMem
             break;
             case 'Li':
             case 'Lf':
+            case 'Ls':
+            case 'Lb':
               memory = this.localMem;
             break;
-            default:
-              throw 'Error: STDEV only accepts vectors of integers or floats'
           }
           vector = [];
 
-          for (let i = left_op; i < right_op; i++) {
+          for (let i = left_op; i <= right_op+1; i++) {
             let pointer = memory[i];
             let index = this.pointerMem[pointer];
             let type = this.getMemoryType(index);
@@ -1252,6 +1105,27 @@ class VM {
             }
             value && vector.push(value);
           }
+          this.paramStack.push(vector);
+        break;
+        case 41:
+          memory_type_right = this.getMemoryType(right_op);
+          memory_type_result = this.getMemoryType(result);
+          switch(memory_type_right){
+            case 'Gi':
+            case 'Gf':
+              right_value = this.globalMem[right_op];
+            break;
+            case 'Li':
+            case 'Lf':
+              right_value = this.localMem[right_op];
+            break;
+            case 'Ci':
+            case 'Cf':
+              right_value = this.constMem[right_op].value;
+            break;
+            default:
+              throw 'Error: Function only accepts vectors of integers or floats'
+          }
 
           switch(memory_type_result){
             case 'Gi':
@@ -1267,7 +1141,168 @@ class VM {
               memory = this.localMem;
             break;
           }
-          memory[result] = jStat.mean(vector);
+          vector = this.paramStack.pop();
+          memory[result] = jStat.normal.pdf(right_value, jStat.mean(vector), jStat.stdev(vector));
+        break;
+        case 42:
+          memory_type_right = this.getMemoryType(right_op);
+          memory_type_result = this.getMemoryType(result);
+          switch(memory_type_right){
+            case 'Gi':
+            case 'Gf':
+              right_value = this.globalMem[right_op];
+            break;
+            case 'Li':
+            case 'Lf':
+              right_value = this.localMem[right_op];
+            break;
+            case 'Ci':
+            case 'Cf':
+              right_value = this.constMem[right_op].value;
+            break;
+            default:
+              throw 'Error: Function only accepts vectors of integers or floats'
+          }
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          vector = this.paramStack.pop();
+          memory[result] = jStat.normal.cdf(right_value, jStat.mean(vector), jStat.stdev(vector));
+        break;
+        case 43:
+          x = this.paramStack.pop();
+          a = this.paramStack.pop();
+          b = this.paramStack.pop();
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.uniform.pdf(x,a,b);
+        break;
+        case 44:
+          x = this.paramStack.pop();
+          a = this.paramStack.pop();
+          b = this.paramStack.pop();
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.uniform.cdf(x,a,b);
+        break;
+        case 45:
+          x = this.paramStack.pop();
+          a = this.paramStack.pop();
+          b = this.paramStack.pop();
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.binomial.pdf(x,a,b);
+        break;
+        case 46:
+          x = this.paramStack.pop();
+          a = this.paramStack.pop();
+          b = this.paramStack.pop();
+
+          switch(memory_type_result){
+            case 'Gi':
+            case 'Gf':
+            case 'Gs':
+            case 'Gb':
+              memory = this.globalMem;
+            break;
+            case 'Li':
+            case 'Lf':
+            case 'Ls':
+            case 'Lb':
+              memory = this.localMem;
+            break;
+          }
+          memory[result] = jStat.binomial.cdf(x,a,b);
+        break;
+        case 47:
+        fileName = this.paramStack.pop();
+        labels = this.paramStack.pop();
+        series = this.paramStack.pop();
+
+        co(function * () {
+          const options = {
+            width: 1000,
+            height: 500,
+            axisX: { title: 'X Axis (units)' },
+            axisY: { title: 'Y Axis (units)' }
+          };
+         
+          const bar = yield generate(result, options, {
+            labels,
+            series: [{value: series}]
+          });
+          var css1 = fs.readFileSync(path.resolve(__dirname, '../node_modules/node-chartist/dist/main.css'), 'utf8');
+          let css = `<style> ${css1} </style>`;
+          let head = `<head>${css}</head> `;
+
+          let handleRequest = (request, response) => {
+            fs.readFile(fileName, null, function (error, data) {
+                if (error) {
+                    response.writeHead(404);
+                    respone.write('File not found');
+                } else {
+                    response.write(head+bar);
+                }
+                response.end();
+            });
+          };
+          http.createServer(handleRequest).listen(8081);
+          console.log("Chart runing on port 8081...");
+        })
+        break;
+        case 48:
+
         break;
         case 51:
           left_op = this.checkifpointer(left_op);
@@ -1347,7 +1382,6 @@ class VM {
               memory[result] = ans;
           break;
         }
-        // console.log(this.quads.now())
         // console.log(this.localMem, this.pointerMem)
         this.quads.next();
       }

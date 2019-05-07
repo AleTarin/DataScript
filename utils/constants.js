@@ -679,7 +679,15 @@ const operatations = {
   "RANGE": 33,
   "VARIANCE": 34,
   "MEAN": 35,
-  
+  "SETPARAM":39,
+  "SETVECTOR":40,
+  "MEAN": 41,
+  "NORMALPDF": 42,
+  "NORMALCDF": 43,
+  "BINOMIALPDF": 44,
+  "BINOMIALCDF": 45,
+  "UNIFORMPDF": 46,
+  "UNIFORMCDF": 47,
   "PRINT": 51,
   "READLINE": 52,
 };

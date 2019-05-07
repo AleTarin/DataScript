@@ -11,23 +11,13 @@ program myProgram:
     while(x <= 10) {
       if ( (x%2) === 0 ) {
       print(x);
-  
       }
       x = x + 1;
     }
   }
 
   main {
-    a = 10 + 2;
-    c[2] = 20;
-    c[1] = 20 * a;
-    c[3] = 4000;
-    s[1] = "HOLA";
-    n[1][1] = c[1] / 20;
-    a = 20 / 10;
-    print(c[1]);
-    print(n[1][1]);
-    a = mean(c);
-    print(a);
+    e = 0 == false ;
+    print(e);
   }
   end

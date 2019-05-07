@@ -53,7 +53,7 @@ class Quads {
   }
 
   fill(end, count){
-    this.quads[end].splice(3, 1, count + 1)
+    this.quads[end].splice(3, 1, count)
   } 
 
   print() {

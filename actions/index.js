@@ -27,8 +27,9 @@ createDir = _ => {
 }
 
 deleteDir = _ => {
-  mm.print()
-  quads.print()
+  mm.print();
+  quads.print();
+
   let vm = new VM(quads, mm);
   vm.run();
 
@@ -47,7 +48,10 @@ setFunType = TYPE => {
   mm.setCurrFunType(findType(TYPE))
 }
 
-// 
+/**
+ * Funcion para guardar los nombres de variables 
+ * Params: ID de variable a guardar
+ */
 setVars = ID => {
   try {
     if (pVars[ID]) {
@@ -62,6 +66,10 @@ setVars = ID => {
   }
 }
 
+/**
+ * Funcion para guardar los nombres de variables de parametros
+ * Params: ID de variable a guardar
+ */
 setParams = ID => {
   try {
     if (pVars[ID]) {
@@ -76,13 +84,14 @@ setParams = ID => {
   }
 }
 
-setParamsType = TYPE => {
+/**
+ * Funcion que mete a memoria las variables en memoria junto con su tipo
+ * Params: Tipo de las variables a guardar 
+ */
+setType = TYPE => {
   try {
     Object.values(pVars).forEach( v => {
-      if (mm.getLocal(v.name))
-        throw "ERROR: Duplicated variable: " + v.name;
-      let index = mm.set({key: v.name, type: findType(TYPE)})
-      mm.addCurrFunParams({key: v.name, type: findType(TYPE), index})
+      mm.set({key: v.name, type: findType(TYPE), dims: v.dims})
     })
     pVars = [];
   } catch (error) {
@@ -91,10 +100,17 @@ setParamsType = TYPE => {
   }
 }
 
-setType = TYPE => {
+/**
+ * Funcion que mete a memoria los parametros en memoria junto con su tipo
+ * Params: Tipo de las variables a guardar 
+ */
+setParamsType = TYPE => {
   try {
     Object.values(pVars).forEach( v => {
-      mm.set({key: v.name, type: findType(TYPE), dims: v.dims})
+      if (mm.getLocal(v.name))
+        throw "ERROR: Duplicated variable: " + v.name;
+      let index = mm.set({key: v.name, type: findType(TYPE)});
+      mm.addCurrFunParams({key: v.name, type: findType(TYPE), index})
     })
     pVars = [];
   } catch (error) {
@@ -159,7 +175,7 @@ setFunParams = _ => {
 
 pushVar = ID => {
   try {
-    const {type, index} = mm.get(ID) || {index: -1}
+    const {type, index} = mm.get(ID) || {index: -1};
     if (index >= 0) {
       pTypes.push(type)
       pOp.push(index)
@@ -281,7 +297,7 @@ poperPush = OP => {
 
 processExp = _ => {
   try {
-    if (poper[0] >= 6 && poper[0] <= 13){
+    if (poper[0] >= 0 && poper[0] <= 13){
       let right_op = pOp.pop();
       let right_type = pTypes.pop();
       let left_op = pOp.pop();
@@ -318,9 +334,12 @@ processAssign = ID => {
   }
 }
 
+/**
+ * Funcion que evalua las operaciones * / % 
+ */
 processFactor = _ => {
   try {
-    if (poper[0] === 2 || poper[0] === 3 || poper[0] === 4){
+    if (poper[0] >= 2 && poper[0] <= 4){
       let right_op = pOp.pop();
       let right_type = pTypes.pop();
       let left_op = pOp.pop();
@@ -345,7 +364,7 @@ processFactor = _ => {
 
 processTerm = _ => {
   try {
-    if (poper[0] === 0 || poper[0] === 1){
+    if (poper[0] >= 0 && poper[0] <= 4){
       let right_op = pOp.pop();
       let right_type = pTypes.pop();
       let left_op = pOp.pop();
@@ -370,7 +389,7 @@ processTerm = _ => {
 
 processHypExp = _ => {
   try {
-    if (poper[0] === 14 || poper[0] === 15){
+    if (poper[0] >= 0 && poper[0] <= 15){
       let right_op = pOp.pop();
       let right_type = pTypes.pop();
       let left_op = pOp.pop();
@@ -394,10 +413,14 @@ processHypExp = _ => {
 
 processCond = _ => {
   try {
+    // Verificar que el tipo sea booleano, sino lanzar error
     if(pTypes.pop() !== 3 ) throw "Type mismatch, boolean expected in condition"
     else {
+      // De ser booleano
       let temp = pOp.pop();
-      quads.push([17, temp ,null,undefined])
+      // Crear cuadruplo con la temporal que se evalua e indefinido para el salto
+      quads.push([17, temp ,null, undefined]);
+      // Guardar el contador de quadruplos - 1
       pJumps.push(quads.length() - 1);
     }
   } catch (e) {
@@ -408,18 +431,14 @@ processCond = _ => {
 
 endCond = _ => {
   let end = pJumps.pop();
-  fillJump(end, quads.length());
-}
-
-fillJump = (end, cont) => {
-  quads.fill(end, cont)
+  quads.fill(end, quads.length());
 }
 
 processElse = _ => {
   quads.push([16, null, null, undefined])
   let f = pJumps.pop();
   pJumps.push(quads.length() - 1);
-  fillJump(f, quads.length());
+  quads.fill(f, quads.length());
 }
 
 pushJump = _ => {
@@ -434,7 +453,7 @@ endWhile = _ => {
   let end = pJumps.pop();
   let ret = pJumps.pop();
   quads.push([16, null ,null, ret])
-  fillJump(end, quads.length());
+  quads.fill(end, quads.length());
 }
 
 checkProcedure  = ID => {
@@ -498,16 +517,44 @@ setMain = _ => {
   quads.main();
 }
 
-pushNative   = (ID, fnName, Op) => {
+/**  
+ * Funcion general para las funciones estadisticas basicas,
+ * Las funciones estadisticas basicas son (Mean, Max, Min, Variance, Range, StDev)
+ * Tiene los mismos parametros, por tanto se uso esta formula general
+ * Params: ID: vector(numerico), nombre de la funcion, Operador
+ * Usos:
+ * pushStdDev  
+ * pushMax      
+ * pushMin      
+ * pushRange    
+ * pushVariance  
+ * pushMean     
+**/
+pushStadistics   = (ID, fnName, Op) => {
   try {
+    // Obtener de la memoria virtual el ID
     let memory = mm.get(ID);
+    // Verificar que existe (undefined es considerado falso)
     if (memory){
+      // Crear un nuevo temporal
       let temp = mm.set({type: 1, sc: 'local'});
       
-      quads.push([Op,memory.index,memory.R,temp]);
+      // Verificar que el ID 
+      if (memory.type !== 0 && memory.type !== 1) 
+        throw `Error ${fnName} only accepts an integer or float as parameter`;
+
+      // Cuadruplo para guardar un vector como parametro: [SetVector, ID = index, tamaño = R, null] 
+      quads.push([40, memory.index, memory.R, null])
+      
+      // Crear cuadruplo de operacion
+      // [Codigo de operacion, ID = index , null, temporal a guardar] 
+      quads.push([Op, memory.index, null    , temp]);
+      
+      // Guardar el indice de memoria y el tipo (todas las funciones estadisticas son float = 1)
       pOp.push(temp);        
-      pTypes.push(1);   
-    } else {
+      pTypes.push(1);
+         
+    } else { // Sino existe marcar un error y terminar el programa
       throw `Error ${fnName}: ${ID} is not defined`
     }
   } catch (e) {
@@ -516,25 +563,174 @@ pushNative   = (ID, fnName, Op) => {
   }
 }
 
+/** Funcion general para las distribuciones normales PDF y CDF.
+ * Params: ID: vector(numerico), nombre de funcion, Operador
+ * Params indirectos: right_op (numerico)
+ * Usos: 
+ * pushNormPDF
+ * pushNormCDF
+*/
+pushNormalDistributions = (ID, Op, fnName) => {
+  try {
+    // Obtener los valores de la variable de memoria
+    let memory = mm.get(ID);
+    if (memory){
+      // Obtener la expresion a evaluar
+      let right_op = pOp.pop();
+      let right_type = pTypes.pop();
 
-pushStdDev   = ID => {
-  pushNative(ID, "STDEV", 30)
+      // Evaluar los tipos de los parametros de la funcion, tienen que ser numbericos
+      // Sino lanzar un error 
+      if (right_type !== 0 && right_type !== 1) {
+        throw `Error ${fnName}: primer parametro debe de ser un valor numerico`;
+      }
+      if (memory.type !== 0 && memory.type !== 1 || memory.R <= 1) {
+        throw `Error ${fnName}: segundo parametro debe ser un vector de numeros`;
+      }      
+      // Crear variable temporal
+      let temp = mm.set({type: 1, sc: 'local'});
+      
+      // Generar cuadruplo para guardar un vector como parametro: [SetVector, ID = index, tamaño = R, null] 
+      quads.push([40, memory.index, memory.R, null]);
+      // Generar cuadruplo propio de la operacion pasando el valor restante
+      quads.push([Op, memory.index, right_op, temp]);
+
+      // Meter el resultado a la pila de operandos y a la pila de tipos 1 = float
+      pOp.push(temp);        
+      pTypes.push(1);   
+    } else {
+      // Si el vecto no existe, marcar error
+      throw `Error ${fnName}: ${ID} is not defined`
+    }
+  } catch (e) {
+    console.error(e);
+    process.exit();
+  }
 }
-pushMax      = ID => {
-  pushNative(ID, "MAX", 31);
+
+/** Funcion general para las distribuciones uniformes y binomiales.
+ * Params: nombre de funcion, Operador
+ * Params indirectos: tres expresiones (numericas)
+ * Usos:
+ * pushUniformPDF 
+ * pushUniformCDF 
+ * pushBinomialPDF
+ * pushBinomialCDF
+*/
+pushDistributions = (Op, fnName) => {
+  try {
+    // Obtener las expresiones a evaluar
+    let first_op = pOp.pop();
+    let first_type = pTypes.pop();
+    let second_op = pOp.pop();
+    let second_type = pTypes.pop();
+    let third_op = pOp.pop();
+    let third_type = pTypes.pop();    
+
+    // Evaluar los tipos de los parametros de la funcion, tienen que ser numbericos
+    // Sino lanzar un error 
+    if (first_type !== 0 && first_type !== 1) {
+      throw `Error ${fnName} only accepts an integer or float at first parameter`
+    }
+    if (second_type !== 0 && second_type !== 1) {
+      throw `Error ${fnName} only accepts an integer or float at second parameter`
+    }
+    if (third_type !== 0 && third_type !== 1) {
+      throw `Error ${fnName} only accepts an integer or float at third parameter`
+    }
+
+    let temp = mm.set({type: 1, sc: 'local'});
+
+    // Meter todos los parametros a memoria Op:39 => guarda parametros
+    quads.push([39, null, null, first_op]);
+    quads.push([39, null, null, second_op]);
+    quads.push([39, null, null, third_op]);
+
+    // Cuadruplo especifico de la distribucion con el temporal donde se guarda el resultado
+    quads.push([Op, null, null, temp]);
+    
+    // Meter a la pila el resultado y su tipo (flotante)
+    pOp.push(temp);        
+    pTypes.push(1);   
+
+  } catch (e) {
+    console.error(e);
+    process.exit();
+  }
 }
-pushMin      = ID => {
-  pushNative(ID, "MIN", 32);
+
+pushStdDev   = ID => pushStadistics(ID, "STDEV", 30);
+pushMax      = ID => pushStadistics(ID, "MAX", 31);
+pushMin      = ID => pushStadistics(ID, "MIN", 32);
+pushRange    = ID => pushStadistics(ID, "RANGE", 33);
+pushVariance = ID => pushStadistics(ID, "VARIANCE", 34);
+pushMean     = ID => pushStadistics(ID, "MEAN", 35);
+
+pushNormPDF  = ID => pushNormalDistributions(ID, 41, "dNormPdf");
+pushNormCDF  = ID => pushNormalDistributions(ID, 42, "dNormCdf");
+pushUniformPDF = _ => pushDistributions( 43, "dUniformPdf");
+pushUniformCDF = _ => pushDistributions( 44, "dUniformCdf");
+pushBinomialPDF = _ => pushDistributions( 45, "dBinomialPdf");
+pushBinomialCDF = _ => pushDistributions( 46, "dBinomialCdf");
+
+/** Funcion general para las distribuciones uniformes y binomiales.
+ * Params: Series: Vector<number>, Label: Vector<number>, nombre de funcion
+ * Params indirectos: expresion numerica
+ * Usos:
+ * pushLinePlot
+ * pushBarPlot 
+*/
+Plot = (X,Y, fnName) => {
+  try {
+    // Obtener los vectores para series y labels
+    let series = mm.get(X);
+    let labels = mm.get(Y);
+
+    // Evaluar si los dos existen
+    if (series && labels){
+    // Obtener la expresion a evaluar
+    let third_op = pOp.pop();
+    let third_type = pTypes.pop();    
+
+    //  Evaluar las dos variables que deben de ser vectores (R > 1) y numericos 
+    //  Y evaluar la tercera expresion que sea string, contiene el nombre del archivo 
+    if (series.type !== 0 && series.type !== 1 || series.R <= 1) {
+      throw `Error ${fnName} only accepts an integer or float at first parameter`
+    }
+    if (labels.type !== 0 && labels.type !== 1 && labels.type !== 2 || labels.R <= 1) {
+      throw `Error ${fnName} only accepts an integer or float at second parameter`
+    }
+    if (third_type !== 2) {
+      throw `Error ${fnName} only accepts an integer or float at third parameter`
+    }
+
+    // Crear un temporal
+    let temp = mm.set({type: 1, sc: 'local'});
+
+    // Cuadruplos para meter los dos vectores como parametros
+    quads.push([40, series.index, series.R, null]);
+    quads.push([40, labels.index, labels.R, null]);
+
+    // Cuadruplo para meter el tercer parametro
+    quads.push([39, null, null, third_op]);
+
+    // Cuadruplo para graficas
+    quads.push([47, null, null, fnName]);
+
+    // Meter a la pila el resultado y su tipo (flotante)
+    pOp.push(temp);        
+    pTypes.push(1);   
+
+    } else { // Sino marcar error
+      throw `Error ${fnName}: ${X} or ${Y} is not defined`
+    }
+  } catch (e) {
+    console.error(e);
+    process.exit();
+  }
 }
-pushRange    = ID => {
-  pushNative(ID, "RANGE", 33);
-}
-pushVariance = ID => {
-  pushNative(ID, "VARIANCE", 34);
-}
-pushMean = ID => {
-  pushNative(ID, "MEAN", 35);
-}
+pushLinePlot = (series,labels) => Plot(series, labels, 'line');
+pushBarPlot = (series,labels) => Plot(series, labels, 'bar');
 
 exports.createDir      = createDir;
 exports.deleteDir      = deleteDir;
@@ -579,3 +775,5 @@ exports.pushMax        = pushMax     ;
 exports.pushMin        = pushMin     ;
 exports.pushRange      = pushRange   ;
 exports.pushVariance   = pushVariance;
+exports.pushNormPDF    = pushNormPDF ;
+exports.pushUniformPDF = pushUniformPDF;

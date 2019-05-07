@@ -251,24 +251,25 @@ mean:     MEAN LPAREN ID RPAREN {yy.parser.pushMean($ID)};
 
 distributions
   :  dNormP     
-  |  dBinomialP 
-  |  dUniformP
   |  dNormC    
+  |  dBinomialP 
   |  dBinomialC
+  |  dUniformP
   |  dUniformC
   ;
 
-dNormP:     DNORMP LPAREN exp COMMA ID RPAREN;
-dBinomialP: DBINOMAILP LPAREN exp COMMA ID RPAREN;
-dUniformP:  DUNIFORMP LPAREN exp COMMA exp COMMA exp RPAREN;
+dNormP:     DNORMP     LPAREN exp COMMA ID RPAREN {yy.parser.pushNormPDF($ID)};
+dNormC:     DNORMC     LPAREN exp COMMA ID RPAREN {yy.parser.pushNormCDF($ID)};
 
-dNormC:     DNORMC LPAREN exp COMMA ID RPAREN;
-dBinomialC: DBINOMAILC LPAREN exp COMMA ID RPAREN;
-dUniformC:  DUNIFORMC LPAREN exp COMMA exp COMMA exp RPAREN;
+dBinomialP: DBINOMIALP LPAREN exp COMMA exp COMMA exp RPAREN {yy.parser.pushBinomialPDF()};
+dBinomialC: DBINOMIALC LPAREN exp COMMA exp COMMA exp RPAREN {yy.parser.pushBinomialCDF()};
+
+dUniformP:  DUNIFORMP  LPAREN exp COMMA exp COMMA exp RPAREN {yy.parser.pushUniformPDF()};
+dUniformC:  DUNIFORMC  LPAREN exp COMMA exp COMMA exp RPAREN {yy.parser.pushUniformCDF()};
 
 plot: barPlot | linePlot;
-barPlot: PLOT LPAREN ID RPAREN;
-linePlot: PLOT LPAREN ID RPAREN;
+barPlot:  BARPLOT  LPAREN ID COMMA ID COMMA exp RPAREN {yy.parser.pushBarPlot($3, $5)};
+linePlot: LINEPLOT LPAREN ID COMMA ID COMMA exp RPAREN {yy.parser.pushLinePlot($3, $5)};
 
 %%
 
@@ -331,3 +332,12 @@ parser.pushMin           = ID                => pushMin(ID);
 parser.pushRange         = ID                => pushRange(ID);
 parser.pushVariance      = ID                => pushVariance(ID);
 parser.pushMean          = ID                => pushMean(ID);
+parser.pushNormPDF       = ID                => pushNormPDF(ID);
+parser.pushNormCDF       = ID                => pushNormCDF(ID);
+parser.pushUniformPDF    = _                 => pushUniformPDF();
+parser.pushUniformCDF    = _                 => pushUniformCDF();
+parser.pushBinomialPDF   = _                 => pushBinomialPDF();
+parser.pushBinomialCDF   = _                 => pushBinomialCDF();
+parser.pushBarPlot       = (X,Y)             => pushBarPlot(X,Y);
+parser.pushLinePlot      = (X,Y)             => pushLinePlot(X,Y);
+parser.pushPiePlot       = (X,Y)             => pushPiePlot(X,Y);

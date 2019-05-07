@@ -212,7 +212,7 @@ class Memory {
 
   print() {
     // console.log(this.dirFun)
-    // console.log("Local:", this.varTables['local'])
+    console.log("Local:", this.varTables['local'])
     // console.log("Global:", this.varTables['global'])
     // console.log("Constants:", this.varTables['const'])
   }

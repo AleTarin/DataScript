@@ -44,15 +44,6 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "dataset"                   return 'DATASET';
 "vector"                    return 'VECTOR';
 
-"rbind"                     return 'RBIND';                     
-"cbind"                     return 'CBIND';
-"setNames"                  return 'SETNAMES';
-"getNames"                  return 'GETNAMES'; 
-"row"                       return 'ROW'; 
-"col"                       return 'COL';
-"head"                      return 'HEAD';
-"tail"                      return 'TAIL';
-
 "stdev"                     return 'STDEV';
 "range"                     return 'RANGE';
 "min"                       return 'MIN';
@@ -66,7 +57,9 @@ id                            [a-zA-Z][a-zA-Z0-9]*
 "dBinomialCdf"              return 'DBINOMIALC';
 "dUniformCdf"               return 'DUNIFORMC';
 
-"plot"                      return 'PLOT';
+"barPlot"                   return 'BARPLOT';
+"linePlot"                  return 'LINEPLOT';
+"piePlot"                   return 'PIEPLOT';
 
 "==="                       return 'DEEP_EQUAL';
 "=="                        return 'EQUAL';
