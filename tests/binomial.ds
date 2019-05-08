@@ -1,0 +1,13 @@
+program myProgram:
+	var a1[3], b:int;
+  main {
+    a1[0] = 20;
+    a1[2] = 10;
+    a1[1] = 30;
+
+    b = dBinomialPdf(2, 4, 0.2f);
+    print("PDF: " + b);
+    b = dBinomialCdf(2 ,4, 0.2f);
+    print("CDF: " + b);
+  }
+  end

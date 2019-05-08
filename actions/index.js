@@ -33,8 +33,9 @@ createDir = _ => {
  * Elimina las estructuras usadas en compilación. 
  */
 deleteDir = _ => {
+  quads.push(["end", null, null, null]);
   // mm.print();
-  quads.print();
+  // quads.print();
 
   let vm = new VM(quads, mm);
   vm.run();
@@ -797,7 +798,11 @@ Plot = (X,Y, fnName) => {
     if (series && labels){
     // Obtener la expresion a evaluar
     let third_op = pOp.pop();
-    let third_type = pTypes.pop();    
+    let third_type = pTypes.pop();   
+    let four_op = pOp.pop();
+    let four_type = pTypes.pop();    
+    let five_op = pOp.pop();
+    let five_type = pTypes.pop();     
 
     //  Evaluar las dos variables que deben de ser vectores (R > 1) y numericos 
     //  Y evaluar la tercera expresion que sea string, contiene el nombre del archivo 
@@ -811,15 +816,26 @@ Plot = (X,Y, fnName) => {
       throw `Error ${fnName} only accepts an integer or float at third parameter`
     }
 
+    if (four_type !== 2) {
+      throw `Error ${fnName} only accepts an integer or float at third parameter`
+    }
+
+    if (five_type !== 2) {
+      throw `Error ${fnName} only accepts an integer or float at third parameter`
+    }
+
     // Crear un temporal
     let temp = mm.set({type: 1, sc: 'local'});
 
     // Cuadruplos para meter los dos vectores como parametros
+
     quads.push([40, series.index, series.R, null]);
     quads.push([40, labels.index, labels.R, null]);
 
     // Cuadruplo para meter el tercer parametro
     quads.push([39, null, null, third_op]);
+    quads.push([39, null, null, four_op]);
+    quads.push([39, null, null, five_op]);
 
     // Cuadruplo para graficas
     quads.push([47, null, null, fnName]);

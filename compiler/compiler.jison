@@ -249,8 +249,8 @@ dUniformP:  DUNIFORMP  LPAREN exp COMMA exp COMMA exp RPAREN {yy.parser.pushUnif
 dUniformC:  DUNIFORMC  LPAREN exp COMMA exp COMMA exp RPAREN {yy.parser.pushUniformCDF()};
 
 plot: barPlot | linePlot;
-barPlot:  BARPLOT  LPAREN ID COMMA ID COMMA exp RPAREN {yy.parser.pushBarPlot($3, $5)};
-linePlot: LINEPLOT LPAREN ID COMMA ID COMMA exp RPAREN {yy.parser.pushLinePlot($3, $5)};
+barPlot:  BARPLOT  LPAREN ID COMMA ID COMMA exp COMMA exp COMMA exp RPAREN {yy.parser.pushBarPlot($3, $5)};
+linePlot: LINEPLOT LPAREN ID COMMA ID COMMA exp COMMA exp COMMA exp RPAREN {yy.parser.pushLinePlot($3, $5)};
 
 %%
 

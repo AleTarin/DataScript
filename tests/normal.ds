@@ -1,0 +1,13 @@
+program myProgram:
+	var a1[3], b:int;
+  main {
+    a1[0] = 20;
+    a1[2] = 10;
+    a1[1] = 30;
+
+    b = dNormPdf(20,a1);
+    print("PDF: " + b);
+    b = dNormCdf(20,a1);
+    print("CDF: " + b);
+  }
+  end

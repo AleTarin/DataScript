@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "node compiler tests/test.ds",
-    "test2": "node compiler tests/distribuciones.ds",
+    "uniform": "node compiler tests/uniform.ds",
+    "normal": "node compiler tests/normal.ds",
+    "binomial": "node compiler tests/binomial.ds",
+    "plot": "node compiler tests/plot.ds",
     "make": "jison compiler/compiler.jison compiler/compiler.jisonlex",
     "fiboR": "node compiler tests/fibonacci_recursive.ds",
     "fiboC": "node compiler tests/fibonacci_cicle.ds",

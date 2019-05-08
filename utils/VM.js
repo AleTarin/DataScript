@@ -1275,9 +1275,11 @@ class VM {
           // Calcular la funcion de probabilidad binomial acumulada
           memory[result] = jStat.binomial.cdf(x,a,b);
         break;
-        case 47:
+        case 47: // PLOT
         // Obtener el archivo HTML, el vector de tags y los datos de los parametros
         fileName = this.paramStack.pop();
+        a = this.paramStack.pop();
+        b = this.paramStack.pop();
         labels = this.paramStack.pop();
         series = this.paramStack.pop();
 
@@ -1286,8 +1288,8 @@ class VM {
           const options = {
             width: 1000,
             height: 500,
-            axisX: { title: 'X Axis (units)' },
-            axisY: { title: 'Y Axis (units)' }
+            axisX: { title: a },
+            axisY: { title: b }
           };
          
           // Definir los datos de la grafica
