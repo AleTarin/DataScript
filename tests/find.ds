@@ -2,7 +2,7 @@ program myProgram:
   var a[5], lenght: int;
   var swapped:bool;
 
-  function find(b:int):void {
+  function find(b:int){
     var i:int;
     i = 0;
     while (i < lenght - 1) {

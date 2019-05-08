@@ -21,13 +21,19 @@ let currentProcedure;
 let quads =  new Quads();
 let mm = new memory();
 
-
+/**
+ * Crea el objeto del programa
+ */
 createDir = _ => {
   p = { };
 }
 
+/**
+ * Corre la máquina virtual con los cuadruplos y la memoria de compilación
+ * Elimina las estructuras usadas en compilación. 
+ */
 deleteDir = _ => {
-  mm.print();
+  // mm.print();
   quads.print();
 
   let vm = new VM(quads, mm);
@@ -120,6 +126,10 @@ setParamsType = TYPE => {
 }
 
 
+/**
+ * Funcion que guarda un arreglo con sus dimensiones en la pila de memoria.
+ * Primero valida que la variable no haya sido definida en el scope.
+ */
 setArr = (ID, D1) => {
   try {
     if (pVars[ID]) {
@@ -134,6 +144,10 @@ setArr = (ID, D1) => {
   }
 }
 
+/**
+ * Funcion que guarda una  matriz con sus dimensiones en la pila de memoria.
+ * Primero valida que la variable no haya sido definida en el scope.
+ */
 setMat = (ID, D1, D2) => {
   try {
     if (pVars[ID]) {
@@ -149,22 +163,33 @@ setMat = (ID, D1, D2) => {
 }
 
 
+/**
+ * Añade la función al directorio de variables. Reinicia el contador de variables.
+ */
 setTable = ID => {
   varCount = 0;
   mm.addFunction(ID);
 }
 
+/**
+ * Funcion que reestablece la memoria local y añade el cuadruplo ENDPROC
+ */
 deleteFunction = _ => {
   mm.deleteFunction();
-  mm.print();
   quads.push([18, null , null, null])
-  // quads.endProcedure();
 }
 
+/**
+ * Añade el cuadruplo de return a la pila de cuadruplos
+ */
 processReturn = _ => {
   quads.push([19, null, null, pOp[0]]);
 }
 
+/**
+ * Establece guarda el contador de parametros, variables 
+ * y el cuadruplo de la función en el directorío de funciones
+ */
 setFunParams = _ => {
   mm.setCurrFunParams(paramCount);
   mm.setCurrFunVars(varCount);
@@ -173,6 +198,9 @@ setFunParams = _ => {
   paramCount = 0;
 }
 
+/** 
+ * Valida que la variable exista, si existe lo mete a stack de tipos y operadores
+  */
 pushVar = ID => {
   try {
     const {type, index} = mm.get(ID) || {index: -1};
@@ -188,25 +216,37 @@ pushVar = ID => {
   }
 }
 
+/**
+ * Función que valida que la variable exista y que sea dimensionado, 
+ * si existe crea los cuádruplos para calcular la dirección 
+ * del arreglo y mete el pointer a la pila de operadores con su tipo.
+ */
 pushArr = ID => {
   try {
     let S1_type = pTypes.pop();
     let S1 = pOp.pop();
 
+    // Validar que la dimensión sea un integer
     if(S1_type !== 0) {
       throw `ERROR ARRAY: ${ID} invalid dimension type ${S1_type}`
     }
+
+    // Validar que la variable exista y traer sus datos.
     const {type, index, D1} = mm.get(ID) || {index: -1}
     if (index >= 0) {
-
+      //Validar que sea una variable dimensionada
       if (D1 === 1) {
         throw `ERROR ARRAY: ${ID} is not an array`
       }
 
-      pointer = mm.set({type, sc:'local'});
+      // Crear memoria para la temporal del array  y la base constante
+      let pointer = mm.set({type, sc:'local'});
       let base    = mm.set({type: 0, sc:'const', value: index});
+      // VER la dimension S1, si esta en el rango 0 al limite Superior
       quads.push([23   , S1, 0, D1 ]);
+      // Sumar la dimension S1 a la base y guardarlo en un temporal
       quads.push([0, S1, base, pointer]);
+      // Push del temporal y su tipo
       pTypes.push(type);
       pOp.push(`(${pointer})`);
     } else {
@@ -218,6 +258,11 @@ pushArr = ID => {
   }
 }
 
+/**
+ * Valida que la variable exista y que sea dimensionado, 
+ * si existe crea los cuádruplos para calcular la dirección de la matriz y 
+ * mete el pointer a la pila de operadores con su tipo.
+ */
 pushMat = ID => {
   try {
     let S2_type = pTypes.pop();
@@ -235,15 +280,23 @@ pushMat = ID => {
         throw `ERROR MATRIX: ${ID} is not a matrix`
       }
 
+      // Crear dos temporales para operaciones y un temporal para el resultado
       let temp    = mm.set({type: 0, sc:'local'});
       let temp2   = mm.set({type: 0, sc:'local'});
       let pointer = mm.set({type, sc:'local'});
+
+      // Crear direcciones para la dimensión D2 y la base
       let dim2    = mm.set({type: 0, sc:'const', value: D2});
       let base    = mm.set({type: 0, sc:'const', value: index});
+      // Validar el rango para S1
       quads.push([23   , S1   , 0    , D1     ]);
+      // S1 * d2
       quads.push([2    , S1   ,  dim2, temp   ]);
+      // Validar el rango para S2
       quads.push([23   , S2   , 0    , D2     ]);
+      // S1 * d2 + S2
       quads.push([0    , temp , S2   , temp2  ]);
+      // S1 * d2 + S2 + Base
       quads.push([0    , temp2, base , pointer]);
       pTypes.push(type);
       pOp.push(`(${pointer})`);
@@ -256,6 +309,10 @@ pushMat = ID => {
   }
 }
 
+/** 
+ * Función que mete a memoria 
+ * y la pila de operadores una constante con su valor 
+ */
 pushConst = (DATA, TYPE) => {
   switch(TYPE){
     case 'int':
@@ -272,10 +329,19 @@ pushConst = (DATA, TYPE) => {
   pOp.push(mm.set({type: findType(TYPE), sc:'const', value: DATA}))
 }
 
+/**
+ * Funcion que mete el codigo de operacion de un operador a la pila de operadores
+ */
 poperPush = OP => {
   poper.push(findOp(OP));
 }
 
+/**
+ * processExp:
+ * Función que procesa una expresion 
+ * si llega una operación lógica o aritmética que no sea AND o OR 
+ * Genera el cuadruplo con el codigo del operador
+ */
 processExp = _ => {
   try {
     if (poper[0] >= 0 && poper[0] <= 13){
@@ -300,6 +366,10 @@ processExp = _ => {
   }  
 }
 
+/**
+ * Función que crea el el cuadruplo de asignación, 
+ * validando previamente los tipos de las expresiones. 
+ */
 processAssign = ID => {
   try {
     let right_op = pOp.pop();
@@ -316,7 +386,10 @@ processAssign = ID => {
 }
 
 /**
- * Funcion que evalua las operaciones * / % 
+ * processFactor:
+ * Funcion que evalua las operaciones multiplicación, división o módulo
+ * Genera el nuevo cuadruplo y mete el temporal con el resultado
+ * en la pila de operadores y tipos.
  */
 processFactor = _ => {
   try {
@@ -343,6 +416,12 @@ processFactor = _ => {
   }  
 }
 
+/**
+ * processTerm: Función que procesa un temino en una expresión
+ * Si llega una suma, resta, división, multiplicación o modulo
+ * Genera el nuevo cuadruplo y mete el temporal con el resultado
+ * en la pila de operadores y tipos
+ */
 processTerm = _ => {
   try {
     if (poper[0] >= 0 && poper[0] <= 4){
@@ -368,6 +447,13 @@ processTerm = _ => {
   }
 }
 
+/**
+ * processHypExp: 
+ * Función que procesa una expresión con AND ,OR,
+ * Si llega AND, OR, o cualquier otra expresión lógica o aritmética
+ * Valida los tipos, genera el cuadruplo y mete el resultado en
+ * la pila de operadores y tipos
+ */
 processHypExp = _ => {
   try {
     if (poper[0] >= 0 && poper[0] <= 15){
@@ -392,6 +478,12 @@ processHypExp = _ => {
   }
 }
 
+/**
+ * processCond
+ * Función que procesa una condición a partir de una expresión
+ * La expresión debe de ser de tipo booleano
+ * De ser así, genera el cuadruplo con el resultado y mete el salto en la pila
+ */
 processCond = _ => {
   try {
     // Verificar que el tipo sea booleano, sino lanzar error
@@ -410,11 +502,20 @@ processCond = _ => {
   }
 }
 
+/**
+ * Función que al termino de una condición, rellena el cuadruplo de salto
+ */
 endCond = _ => {
   let end = pJumps.pop();
   quads.fill(end, quads.length());
 }
 
+/**
+ * processElse: 
+ * Función que genera el cuadruplo de salto para un else
+ * A la vez, mete el indice de cuadruplo actual a la pila de saltos
+ * y rellena el cuadruplo del If anterior
+ */
 processElse = _ => {
   quads.push([16, null, null, undefined])
   let f = pJumps.pop();
@@ -422,14 +523,23 @@ processElse = _ => {
   quads.fill(f, quads.length());
 }
 
+/**
+ * Función que guarda el cuadruplo actual en la pila de saltos
+ */
 pushJump = _ => {
   pJumps.push(quads.length());
 }
 
+/**
+ * Al principio del while, hacer lo mismo que la condición
+ */
 processWhile = _ => {
   processCond();
 }
-
+/**
+ * Función que al final del while genera el GOTO de retorno al principio del ciclo
+ * Y rellena a su vez el cuadruplo de salto al que se metio al principio del ciclo
+ */
 endWhile = _ => {
   let end = pJumps.pop();
   let ret = pJumps.pop();
@@ -437,6 +547,9 @@ endWhile = _ => {
   quads.fill(end, quads.length());
 }
 
+/** Función que valida si una función ya existe al llamarla. 
+ * Si existe, la pone como el procedimiento actual 
+ * */
 checkProcedure  = ID => {
   try {
     if(mm.getFunc(ID) === undefined) throw `Undefined function ${ID} called`;
@@ -447,11 +560,19 @@ checkProcedure  = ID => {
   }
 }
 
+/**
+ * Función que genera el código de operación ERA para el procedimiento actual
+ */
 pushERA         = _ => {
   quads.push([20, null ,null, currentProcedure]);
   paramCount = 0;
 }
 
+/**
+ * Función que obtiene de un call un argumento, 
+ * lo valida con la tabla de procedimientos y 
+ * genera el cuadruplo de parametro 
+ */
 getArgument    = _ => {
   try {
     let arg = pOp.pop();
@@ -466,25 +587,29 @@ getArgument    = _ => {
   }
 }
 
+/**
+ * Aumenta el paramCount
+ */
 nextArgument   = _ => {
   paramCount++;
 }
 
+/** Genera el cuadruplo de GOSUB para el procedimiento actual */
 pushGOSUB       = _ => {
   quads.push([21,null, null, currentProcedure]);
-  // let { type } = mm.getFunc(currentProcedure)
-  // let temp = mm.set({key:current, type, sc: 'local'});
-  // pOp.push(temp);      
-  // pTypes.push(type);
-  // quads.push([5, current, null,temp])
 }
 
+/** Genera el cuadruplo de print para la expresión contenida */
 pushPrint  = _ => {
   let arg = pOp.pop();
   pTypes.pop();
   quads.push([51, arg, null, null]);
 }
 
+/**
+ * Función que genera el cuadruplo de lectura
+ * Valida si la función destinada existe.
+ */
 pushReadLine = ID => {
   let arg = pOp.pop();
   pTypes.pop();
@@ -494,6 +619,7 @@ pushReadLine = ID => {
   }
 }
 
+/** Función que establece el cuadruplo del main */
 setMain = _ => {
   quads.main();
 }

@@ -17,8 +17,8 @@ program myProgram:
         actual = actual + anterior;
         anterior = temp;
       }
-      print(actual);
       cont = cont + 1;
     }
+    print(actual);
   }
   end

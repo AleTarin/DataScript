@@ -1,19 +1,21 @@
-
-
-
 program myProgram:
-	var a1[3][3], a2[3][3], a3[3][3]:int;
-  var i,j,k, aux1, aux2, aux3, aux4 ,lenght: int;
-
+	var a1[3][3], b:int;
   main {
-    a1[0][0] = 2;
-    a1[0][1] = 0;
-    a1[1][0] = 3;
+    a1[0][0] = 20;
+    a1[0][1] = 10;
+    a1[1][0] = 30;
 
-    print(a1[0][0]);
-    print(a1[0][1]);
-    print(a1[1][0]);
-
-
+    b = max(a1);
+    print("max: " + b);
+    b = min(a1);
+    print("min: " + b);
+    b = mean(a1);
+    print("mean: " + b);
+    b = variance(a1);
+    print("variance: " + b);
+    b = stdev(a1);
+    print("stdev: " + b);
+    b = range(a1);
+    print("range: " + b);
   }
   end

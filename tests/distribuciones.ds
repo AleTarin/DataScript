@@ -1,0 +1,14 @@
+program myProgram:
+	var series[3], b:int; 
+  var labels[3]: string;
+  main {
+    labels[0] = "primero";
+    labels[2] = "segundo";
+    labels[1] = "tercero";
+
+    series[0] = 10;
+    series[1] = 13;
+    series[2] = 4;
+    linePlot(series,labels, "index.html");
+  }
+  end

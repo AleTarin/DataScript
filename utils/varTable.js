@@ -6,42 +6,52 @@ class variableTable {
     this.size = 0;
   }
 
+  /**
+   * Función que guarda en memoria una variable con sus valores
+   * Maneja dos arreglos asociativos, uno cuya llave es el nombre de la variable 
+   * y otra donde la llave es la dirección de memoria para facilitar la busqueda.
+   * @param {string} key
+   * @param {int} type
+   * @param {any} value
+   * @param {int} R
+   * @param {int} D1
+   * @param {int} D2  
+   */
   set({key, type, index, value, R, D1, D2}) {
     if(key !== undefined) this.varTable[key] = { key, type, index, R, D1, D2, value};
     if(index !== undefined) this.memTable[index] = { key, type, index, R, D1, D2, value};
     this.size++;
   }
 
+  /**
+   * Busca si existe una variable a partir de su llave
+   * @param {string} key 
+   * @returns bool
+   */
   exists(key){
     return key && !!this.varTable[key] || !!this.memTable[key];
   }
 
+  /**
+   * Si existe una variable, devuelve el valor de la misma
+   * @param {string} key
+   * @returns object 
+   */
   get(key) {
     if (this.exists(key)) return this.varTable[key] || this.memTable[key];
   }
 
-  getByIndex(index) {
-    let key = this.memTable[index]
-    return this.get(key);
-  }
-
-  setResult(index, value) {
-    this.memTable[index] = {...this.memTable[index], value}
-  }
-
-  errorHandler (e) {
-    console.error(e);
-    process.exit();
-  }
-
-  print () {
-    console.log("Tabla de variables:", JSON.stringify(this.varTable))
-  }
-
+  /**
+   * Retorna la tabla de memoria
+   * @returns object
+   */
   getMemory(){
     return this.memTable;
   }
 
+  /**
+   * Limpia la tabla de variables y de memoria
+   */
   clear () {
     this.varTable = {};
     this.memTable = {};

@@ -1,18 +1,17 @@
 program myProgram:
-  var n, resultado: int;
+  var resultado: int;
 
-  function factorial():void {
+  function factorial(n: int) {
     resultado = resultado * n;
     n = n-1;
     if(n>0){
-      factorial();
+      factorial(n);
     }
   }
 
   main {
-    readline("N:", n);
     resultado = 1;
-    factorial();
+    factorial(10);
     print(resultado);
   }
   end

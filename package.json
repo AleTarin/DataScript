@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node compiler tests/test.ds",
+    "test2": "node compiler tests/distribuciones.ds",
     "make": "jison compiler/compiler.jison compiler/compiler.jisonlex",
     "fiboR": "node compiler tests/fibonacci_recursive.ds",
     "fiboC": "node compiler tests/fibonacci_cicle.ds",

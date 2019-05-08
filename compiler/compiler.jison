@@ -35,7 +35,6 @@ var-recursive
 
 var-follow
   : COLON _v2 SEMICOLON var
-  | COLON new-structure SEMICOLON var
   ;
  
 _v2: type { yy.parser.setType($type) };
@@ -44,12 +43,10 @@ _v4: ID LBRACKET CTEI RBRACKET { yy.parser.setArr($ID, $3); };
 _v5: ID LBRACKET CTEI RBRACKET LBRACKET CTEI RBRACKET  { yy.parser.setMat($ID, $3, $6) };
 
 modules
-  : FUNCTION _module1 LPAREN params RPAREN COLON  _module4 block-vars _module6 modules 
-  | FUNCTION _module1 LPAREN RPAREN COLON  _module4 block-vars _module6 modules 
+  : FUNCTION _module1 LPAREN params RPAREN block-vars _module6 modules 
+  | FUNCTION _module1 LPAREN RPAREN block-vars _module6 modules 
   | %empty 
   ;
-  
-module-type: type | VOID ;
 
 params : _module2 COLON _module3 params-recursive;
 params-recursive
@@ -60,7 +57,8 @@ params-recursive
 _module1: ID { yy.parser.setTable($1) };
 _module2: ID { yy.parser.setParams($1) };
 _module3: type { yy.parser.setParamsType($1)};
-_module4: module-type { yy.parser.setFunType($1)};
+_module5: { yy.parser.setFunParams()};
+_module6: { yy.parser.deleteFunction(); };
 
 type: INT | FLOAT | BOOL | STRING ;
 
@@ -69,14 +67,9 @@ block-vars: LBRACE var _module5 block-inside RBRACE;
 
 block-inside
   : statement block-inside
-  | return-statement
   | %empty
   ;
   
-_module6: { yy.parser.deleteFunction(); };
-_module5: { yy.parser.setFunParams()};
-
-return-statement: RETURN exp SEMICOLON { yy.parser.processReturn()};
 
 statement
   : assignation
@@ -172,7 +165,6 @@ var-cte
   | CTES {yy.parser.pushConst($1,'string')}
   | TRUE {yy.parser.pushConst($1,'bool')}
   | FALSE {yy.parser.pushConst($1, 'bool')}
-  | call
   | native-functions
   ;
 
@@ -209,9 +201,7 @@ _cond1: {yy.parser.processCond()};
 _cond2: {yy.parser.endCond()};
 _cond3: {yy.parser.processElse()};
 
-cycle: cycle-for | cycle-while;
-
-cycle-for: FOREACH LPAREN ID IN ID RPAREN block;
+cycle: cycle-while;
 cycle-while: WHILE _while1 LPAREN and-or-expression RPAREN _while2 block _while3;
 
 _while1: { yy.parser.pushJump()};
@@ -223,15 +213,6 @@ native-functions
   | distributions
   | plot
   ;
-
-rbind: RBIND LPAREN ID COMMA ID RPAREN SEMICOLON;
-cbind: CBIND LPAREN ID COMMA ID COMMA exp RPAREN SEMICOLON;
-getNames: GETNAMES LPAREN ID RPAREN;
-setNames: SETNAMES LPAREN ID COMMA VECTOR RPAREN;
-row: ROW LPAREN ID COMMA exp RPAREN;
-col: COL LPAREN ID COMMA exp RPAREN;
-head: HEAD LPAREN ID COMMA exp RPAREN;
-tail: TAIL LPAREN ID COMMA exp RPAREN;
 
 stadistics
   : stdev   

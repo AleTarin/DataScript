@@ -26,12 +26,14 @@ class VM {
     try {
       var auxMemory, fnName, t;
 
-
+      // Mientras el cuadruplo sea "truthy", es decir, no sea indefinido
       while (this.quads.now()) {
         var memory, left_value, right_value, result_value;
         var memory_type_left, memory_type_right, memory_type_result;
         var vector;
         var x,a,b, series, labels, fileName;
+
+        // Obtener los datos dentro del cuadruplo en cada iteración
         var [operator, left_op, right_op, result ] = this.quads.now();
         switch(operator) {
           case 0: // Suma
@@ -128,7 +130,7 @@ class VM {
             result_value = left_value - right_value;
             this.localMem[result] = result_value; 
           break;
-          case 2: // Mult
+          case 2: // Multiplicación
             left_op = this.checkifpointer(left_op);
             right_op = this.checkifpointer(right_op);
             
@@ -211,7 +213,7 @@ class VM {
             result_value = left_value / right_value;
             this.localMem[result] = result_value; 
           break;
-          case 4: // MODULE
+          case 4: // Modulo
             left_op = this.checkifpointer(left_op);
             right_op = this.checkifpointer(right_op);
 
@@ -282,6 +284,8 @@ class VM {
             default:
               throw 'Error: operator is not valid in assignation'
           }
+
+          // Dependiendo del resultado, asignar se asigna en cada tabla de memoria el valor izquierdo
           switch(memory_type_result){
             case 'Gi':
             case 'Gf':
@@ -294,8 +298,6 @@ class VM {
             case 'Ls':
             case 'Lb':
               this.localMem[result] = left_value;
-            break;
-
             break;
             default:
               throw 'Error: variable is not valid in assignation'
@@ -633,7 +635,7 @@ class VM {
             result_value = left_value < right_value;
             this.localMem[result] = result_value; 
           break;
-          case 13:
+          case 13: // <=
             left_op = this.checkifpointer(left_op);
             right_op = this.checkifpointer(right_op);
 
@@ -709,7 +711,7 @@ class VM {
             result_value = left_value && right_value;
             this.localMem[result] = result_value; 
           break;
-          case 15:
+          case 15: // || 
             left_op = this.checkifpointer(left_op);
             right_op = this.checkifpointer(right_op);
 
@@ -774,8 +776,11 @@ class VM {
             } 
           break;
           case 18: // ENDPROC
+            // Ir al siguiente quadruplo del guardado
             this.quads.goto(this.quads.getSaved()+1);
+            // Sacar del active record la ultima memoria local alojada (regresar a función)
             this.localMem = this.activeRecord.pop();
+            // Sacar el nombre de la función a la que se regresó
             fnName = this.fnRecord.pop();
           break;
           case 19: // RETURN
@@ -836,10 +841,15 @@ class VM {
             auxMemory = {};
           break;
           case 21: // GOSUB
+            // Meter a memoria el nombre y memoria local
             this.activeRecord.push(this.localMem)
             this.fnRecord.push(result);
             this.localMem = auxMemory;
+
+            // Guardar el cuadruplo de donde se esta llamando la función para regresar
             this.quads.save(this.quads.getCurrent());
+
+            // Ir al cuadruplo donde empieza la función
             this.quads.goto(this.dirFunc.getFunc(result).quad);
 
           break;
@@ -883,16 +893,20 @@ class VM {
                t = 3
               break;
             }
+            // Obtener el parametro de la tabla de parametros
             let paramTable = this.dirFunc.getFunc(result).paramTable;
             let param = paramTable[right_op];
+            
+            // Si son de diferente tipo, marcar error
             if (param.type !== t){
               throw `Invalid parameter #${right_op} in ${result} call, expecting type ${param.type}, got ${t}`
             }
 
+            // Sino meterlo a memoria local 
             auxMemory[param.index] = left_value; 
 
           break;
-          case 23: // VER (VERIFICAR RANGO DE ARRAYS)
+          case 23: // VER 
             memory_type_left = this.getMemoryType(left_op);
             switch(memory_type_left){
               case 'Gi':
@@ -907,14 +921,13 @@ class VM {
               default:
                 throw 'Error: dimensions should be integer'
             }
-            
+            // VERIFICAR RANGO DE ARRAYS
             if (left_value < right_op || left_value >= result ) {
-              console.log(left_value, right_op, result, left_value < right_op , left_value >= result);
               throw 'Error in array: index out of range'
             }
 
           break;
-          case 30:
+          case 30: //STDEV
             memory_type_result = this.getMemoryType(result);
             switch(memory_type_result){
               case 'Gi':
@@ -930,10 +943,12 @@ class VM {
                 memory = this.localMem;
               break;
             }
+            // Obtener vector de datos
             vector = this.paramStack.pop();
+            // Calcular la desviacion estandar y guardarla en memoria
             memory[result] = jStat.stdev(vector);
           break;
-          case 31:
+          case 31: // MAX
             memory_type_result = this.getMemoryType(result);
             switch(memory_type_result){
               case 'Gi':
@@ -949,10 +964,12 @@ class VM {
                 memory = this.localMem;
               break;
             }
+            // Obtener vector de datos
             vector = this.paramStack.pop();
+            // Buscar el maximo y guardarlo en memoria
             memory[result] = jStat.max(vector);
           break;
-          case 32:
+          case 32: // MIN
             memory_type_result = this.getMemoryType(result);
             switch(memory_type_result){
               case 'Gi':
@@ -968,10 +985,12 @@ class VM {
                 memory = this.localMem;
               break;
             }
+            // Obtener vector de datos
             vector = this.paramStack.pop();
+            // Buscar el minimo y guardarlo en memoria
             memory[result] = jStat.min(vector);
           break;
-          case 33:
+          case 33: //RANGE
             memory_type_result = this.getMemoryType(result);
 
             switch(memory_type_result){
@@ -991,7 +1010,7 @@ class VM {
             vector = this.paramStack.pop();
             memory[result] = jStat.range(vector);
         break;
-        case 34:
+        case 34: //VARIANCE
           memory_type_result = this.getMemoryType(result);
           switch(memory_type_result){
             case 'Gi':
@@ -1010,7 +1029,7 @@ class VM {
           vector = this.paramStack.pop();
           memory[result] = jStat.variance(vector);
         break;
-        case 35:
+        case 35: //MEAN
           memory_type_result = this.getMemoryType(result);
           switch(memory_type_result){
             case 'Gi':
@@ -1029,8 +1048,9 @@ class VM {
           vector = this.paramStack.pop();
           memory[result] = jStat.mean(vector);
         break;
-        case 39:
+        case 39: //SETPARAM
           memory_type_result = this.getMemoryType(result);
+          // Obtener valor de memoria
           switch(memory_type_result){
             case 'Gi':
             case 'Gf':
@@ -1053,9 +1073,10 @@ class VM {
             default:
               throw 'Error: operator is not valid in param'
           }
+          // Guardarlo en el stack de parametros
           this.paramStack.push(result_value);
         break;
-        case 40:
+        case 40: //SETVECTOR
           memory_type_left = this.getMemoryType(left_op);
           switch(memory_type_left){
             case 'Gi':
@@ -1073,13 +1094,17 @@ class VM {
           }
           vector = [];
 
-          for (let i = left_op; i <= right_op+1; i++) {
+          //A partir de la direccion base y el tamaño de una variable dimensionada, 
+          // obtener todos los datos y guardarlo en array
+          for (let i = left_op; i < (right_op + left_op); i++) {
             let value = memory[i];
+  
             value && vector.push(value);
           }
+          // Meter el array en el vector de parametros
           this.paramStack.push(vector);
         break;
-        case 41:
+        case 41: //DNORMPDF
           memory_type_right = this.getMemoryType(right_op);
           memory_type_result = this.getMemoryType(result);
           switch(memory_type_right){
@@ -1113,10 +1138,12 @@ class VM {
               memory = this.localMem;
             break;
           }
+          // Obtener el vector guardado en la pila
           vector = this.paramStack.pop();
+          // Calcular la distribucion normal de ese vector
           memory[result] = jStat.normal.pdf(right_value, jStat.mean(vector), jStat.stdev(vector));
         break;
-        case 42:
+        case 42: // DNORMCDF
           memory_type_right = this.getMemoryType(right_op);
           memory_type_result = this.getMemoryType(result);
           switch(memory_type_right){
@@ -1150,13 +1177,17 @@ class VM {
               memory = this.localMem;
             break;
           }
+          // Obtener el vector guardado en la pila
           vector = this.paramStack.pop();
+          // Calcular la distribucion normal acumulada de ese vector
           memory[result] = jStat.normal.cdf(right_value, jStat.mean(vector), jStat.stdev(vector));
         break;
-        case 43:
+        case 43: // UNIFORM PDF
+          //Obtenre los tres parametros de la pila
           x = this.paramStack.pop();
           a = this.paramStack.pop();
           b = this.paramStack.pop();
+          memory_type_result = this.getMemoryType(result);
 
           switch(memory_type_result){
             case 'Gi':
@@ -1172,12 +1203,14 @@ class VM {
               memory = this.localMem;
             break;
           }
+          // Calcular la funcion de probabilidad uniforme
           memory[result] = jStat.uniform.pdf(x,a,b);
         break;
         case 44:
           x = this.paramStack.pop();
           a = this.paramStack.pop();
           b = this.paramStack.pop();
+          memory_type_result = this.getMemoryType(result);
 
           switch(memory_type_result){
             case 'Gi':
@@ -1193,12 +1226,14 @@ class VM {
               memory = this.localMem;
             break;
           }
+          // Calcular la funcion de probabilidad uniforme acumulada
           memory[result] = jStat.uniform.cdf(x,a,b);
         break;
         case 45:
           x = this.paramStack.pop();
           a = this.paramStack.pop();
           b = this.paramStack.pop();
+          memory_type_result = this.getMemoryType(result);
 
           switch(memory_type_result){
             case 'Gi':
@@ -1214,12 +1249,14 @@ class VM {
               memory = this.localMem;
             break;
           }
+          // Calcular la funcion de probabilidad binomial
           memory[result] = jStat.binomial.pdf(x,a,b);
         break;
         case 46:
           x = this.paramStack.pop();
           a = this.paramStack.pop();
           b = this.paramStack.pop();
+          memory_type_result = this.getMemoryType(result);
 
           switch(memory_type_result){
             case 'Gi':
@@ -1235,14 +1272,17 @@ class VM {
               memory = this.localMem;
             break;
           }
+          // Calcular la funcion de probabilidad binomial acumulada
           memory[result] = jStat.binomial.cdf(x,a,b);
         break;
         case 47:
+        // Obtener el archivo HTML, el vector de tags y los datos de los parametros
         fileName = this.paramStack.pop();
         labels = this.paramStack.pop();
         series = this.paramStack.pop();
 
         co(function * () {
+          // Definir las opciones
           const options = {
             width: 1000,
             height: 500,
@@ -1250,14 +1290,18 @@ class VM {
             axisY: { title: 'Y Axis (units)' }
           };
          
+          // Definir los datos de la grafica
           const bar = yield generate(result, options, {
             labels,
             series: [{value: series}]
           });
+
+          // Obtener los estilos de la grafica
           var css1 = fs.readFileSync(path.resolve(__dirname, '../node_modules/node-chartist/dist/main.css'), 'utf8');
           let css = `<style> ${css1} </style>`;
           let head = `<head>${css}</head> `;
 
+          // Escribir en el archivo HTML el codigo de la grafica
           let handleRequest = (request, response) => {
             fs.readFile(fileName, null, function (error, data) {
                 if (error) {
@@ -1269,14 +1313,13 @@ class VM {
                 response.end();
             });
           };
+          //Correr el servidor con el archivo
           http.createServer(handleRequest).listen(8081);
           console.log("Chart runing on port 8081...");
         })
         break;
-        case 48:
-
-        break;
         case 51:
+          // Verificar si es un pointer
           left_op = this.checkifpointer(left_op);
           memory_type_left = this.getMemoryType(left_op);
           switch(memory_type_left){
@@ -1301,7 +1344,7 @@ class VM {
               default:
                 throw 'Error: operator is not valid in print'              
             }
-            // PRINT DONT REMOVE
+            // PRINT, no remover
             console.log(left_value);
           break;
           case 52:
@@ -1350,14 +1393,15 @@ class VM {
                 throw 'Error: variable is not valid in input'
             }
 
-              var ans = prompt(`>> ${left_value} `);
-              memory[result] = ans;
+              // Llamar a la interfaz de entrada y guardar el resultado en memoria
+              memory[result] =  prompt(`>> ${left_value} `);
           break;
         }
-        // console.log(this.localMem, this.pointerMem)
+        // Pasar al siguiente cuadruplo
         this.quads.next();
       }
     } catch (e) {
+      // En caso de error o que se acaben los cuadruplos, terminar el programa
       console.error(e);
       process.exit();
     }

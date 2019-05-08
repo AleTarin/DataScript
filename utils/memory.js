@@ -217,15 +217,5 @@ class Memory {
   getDirFunc(){
     return this.dirFun;
   }
-
- /**
- * Función para imprimir la memoria, usada para pruebas 
- */
-  print() {
-    // console.log(this.dirFun)
-    // console.log("Local:", this.varTables['local'])
-    // console.log("Global:", this.varTables['global'])
-    // console.log("Constants:", this.varTables['const'])
-  }
 }
 exports.Memory = Memory;
